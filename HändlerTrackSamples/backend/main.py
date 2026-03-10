@@ -16,13 +16,61 @@ import os
 import uuid
 import tempfile
 import openpyxl  # type: ignore
+import re
 from dotenv import load_dotenv
+import logging
+import json
+from datetime import datetime
+
+# ====================
+# CONFIGURACIÓN DE LOGGING
+# ====================
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('app.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Función para sanitizar búsquedas - PREVENCIÓN INYECCIÓN SQL
+def sanitize_search_query(q: str) -> str:
+    """Sanitiza la entrada del usuario para búsquedas"""
+    if not q:
+        return ""
+    # Solo permitir caracteres seguros (letras, números, espacios, guiones, puntos, guiones bajos)
+    return re.sub(r'[^\w\s\-_.@]', '', q)
 
 # Cargar variables de entorno
 load_dotenv()
 
-# Configuración CORS desde variables de entorno
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+# Validar y configurar CORS de forma segura
+def validate_cors_origins(origins: str) -> list:
+    """Valida que los orígenes CORS sean seguros"""
+    if not origins:
+        return ["http://localhost:3000"]
+    
+    origin_list = origins.split(",")
+    validated = []
+    for origin in origin_list:
+        origin = origin.strip()
+        if origin == "*":
+            raise ValueError("CORS wildcard '*' no permitido con credenciales")
+        if not origin.startswith(("http://", "https://")):
+            raise ValueError(f"Origen CORS inválido: {origin}")
+        validated.append(origin)
+    return validated
+
+try:
+    CORS_ORIGINS = validate_cors_origins(os.getenv("CORS_ORIGINS", "http://localhost:3000"))
+except ValueError as e:
+    print(f"Advertencia CORS: {e}")
+    CORS_ORIGINS = ["http://localhost:3000"]
+
+# Directorio base para archivos CoA - SEGURIDAD PATH TRAVERSAL
+COA_BASE_DIR = os.path.abspath(os.getenv("COA_BASE_DIR", "C:\\Handler\\Certificados"))
 
 app = FastAPI(title="Händler TrackSamples", version="1.0.0")
 
@@ -51,7 +99,14 @@ async def root():
 # ============ ENDPOINTS DE MUESTRAS ============
 
 @app.post("/samples/", response_model=schemas.Sample)
-async def create_sample(sample: schemas.SampleCreate, db: Session = Depends(get_db)):
+async def create_sample(
+    sample: schemas.SampleCreate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # ✅ REQUIERE AUTENTICACIÓN
+):
+    # ✅ LOGGING: Registrar creación de muestra
+    logger.info(f"Usuario {current_user.username} creando muestra: {sample.reference_code}")
+    
     # Verificar compatibilidad química
     if sample.chemical_composition:
         incompatible = check_chemical_compatibility(
@@ -62,6 +117,7 @@ async def create_sample(sample: schemas.SampleCreate, db: Session = Depends(get_
             db
         )
         if incompatible:
+            logger.warning(f"Compatibilidad química fallida: {incompatible}")
             raise HTTPException(
                 status_code=400,
                 detail=f"Riesgo de reacción: Sustancia incompatible en la misma posición: {incompatible}"
@@ -71,6 +127,9 @@ async def create_sample(sample: schemas.SampleCreate, db: Session = Depends(get_
     db.add(db_sample)
     db.commit()
     db.refresh(db_sample)
+    
+    # ✅ LOGGING: Registrar éxito
+    logger.info(f"Muestra creada exitosamente: {db_sample.id} - {db_sample.reference_code}")
     return db_sample
 
 @app.get("/samples/", response_model=List[schemas.Sample])
@@ -80,16 +139,19 @@ async def read_samples(
     sample_status: str = Query(None, description="Estado de la muestra"),
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # ✅ REQUIERE AUTENTICACIÓN
 ):
     query = db.query(Sample)
     
     if q:
+        # ✅ Sanitizar búsqueda para prevenir inyección SQL
+        safe_q = sanitize_search_query(q)
         query = query.filter(
-            Sample.reference_code.contains(q) |
-            Sample.description.contains(q) |
-            Sample.supplier.contains(q) |
-            Sample.batch_number.contains(q)
+            Sample.reference_code.ilike(f"%{safe_q}%") |
+            Sample.description.ilike(f"%{safe_q}%") |
+            Sample.supplier.ilike(f"%{safe_q}%") |
+            Sample.batch_number.ilike(f"%{safe_q}%")
         )
     
     if business_line:
@@ -102,14 +164,23 @@ async def read_samples(
     return samples
 
 @app.get("/samples/{sample_id}", response_model=schemas.Sample)
-async def read_sample(sample_id: int, db: Session = Depends(get_db)):
+async def read_sample(
+    sample_id: int, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # ✅ REQUIERE AUTENTICACIÓN
+):
     sample_obj = db.query(Sample).filter(Sample.id == sample_id).first()
     if sample_obj is None:
         raise HTTPException(status_code=404, detail="Sample not found")
     return sample_obj
 
 @app.put("/samples/{sample_id}", response_model=schemas.Sample)
-async def update_sample(sample_id: int, sample_update: SampleUpdate, db: Session = Depends(get_db)):
+async def update_sample(
+    sample_id: int, 
+    sample_update: SampleUpdate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # ✅ REQUIERE AUTENTICACIÓN
+):
     sample_obj = db.query(Sample).filter(Sample.id == sample_id).first()
     if sample_obj is None:
         raise HTTPException(status_code=404, detail="Sample not found")
@@ -123,7 +194,14 @@ async def update_sample(sample_id: int, sample_update: SampleUpdate, db: Session
     return sample_obj
 
 @app.delete("/samples/{sample_id}")
-async def delete_sample(sample_id: int, db: Session = Depends(get_db)):
+async def delete_sample(
+    sample_id: int, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # ✅ REQUIERE AUTENTICACIÓN
+):
+    # Verificar que solo administradores pueden eliminar
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Solo administradores pueden eliminar muestras")
     sample_obj = db.query(Sample).filter(Sample.id == sample_id).first()
     if sample_obj is None:
         raise HTTPException(status_code=404, detail="Sample not found")
@@ -135,9 +213,20 @@ async def delete_sample(sample_id: int, db: Session = Depends(get_db)):
 # ============ ENDPOINTS DE MOVIMIENTOS ============
 
 @app.post("/movements/", response_model=schemas.Movement)
-async def create_movement(movement: schemas.MovementCreate, db: Session = Depends(get_db)):
-    # Verificar que la muestra existe
-    sample_obj = db.query(Sample).filter(Sample.id == movement.sample_id).first()
+async def create_movement(
+    movement: schemas.MovementCreate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # ✅ REQUIERE AUTENTICACIÓN
+):
+    """
+    Crea un nuevo movimiento de entrada o salida.
+    Utiliza bloqueo pesimista (with_for_update) para prevenir race conditions.
+    """
+    # ✅ CONTROL DE CONCURRENCIA: Bloqueo pesimista para prevenir race conditions
+    sample_obj = db.query(Sample).filter(
+        Sample.id == movement.sample_id
+    ).with_for_update().first()
+    
     if sample_obj is None:
         raise HTTPException(status_code=404, detail="Sample not found")
     
@@ -149,8 +238,14 @@ async def create_movement(movement: schemas.MovementCreate, db: Session = Depend
             raise HTTPException(status_code=400, detail="Insufficient quantity")
         sample_obj.quantity -= movement.quantity
     
-    db_movement = Movement(**movement.model_dump())
+    # Crear movimiento con el ID del usuario actual
+    movement_data = movement.model_dump()
+    movement_data['user_id'] = current_user.id
+    
+    db_movement = Movement(**movement_data)
     db.add(db_movement)
+    
+    # ✅ Commit único - atomic transaction
     db.commit()
     db.refresh(db_movement)
     return db_movement
@@ -159,18 +254,50 @@ async def create_movement(movement: schemas.MovementCreate, db: Session = Depend
 async def read_movements(
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # ✅ REQUIERE AUTENTICACIÓN
 ):
     """Lista todos los movimientos del sistema"""
     movements = db.query(Movement).order_by(Movement.created_at.desc()).offset(skip).limit(limit).all()
     return movements
 
 @app.get("/samples/{sample_id}/movements", response_model=List[schemas.Movement])
-async def get_sample_movements(sample_id: int, db: Session = Depends(get_db)):
+async def get_sample_movements(
+    sample_id: int, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # ✅ REQUIERE AUTENTICACIÓN
+):
+    """Obtiene los movimientos de una muestra específica (requiere autenticación)"""
+    # Verificar que la muestra existe
+    sample_obj = db.query(Sample).filter(Sample.id == sample_id).first()
+    if sample_obj is None:
+        raise HTTPException(status_code=404, detail="Sample not found")
+    
     movements = db.query(Movement).filter(Movement.sample_id == sample_id).all()
     return movements
 
 # ============ ENDPOINTS DE IMPORTACIÓN ============
+
+# Constantes de seguridad para archivos
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB máximo
+ALLOWED_EXTENSIONS = ['.xlsx']
+
+def validate_uploaded_file(filename: str, content: bytes) -> bool:
+    """Valida que el archivo subido sea seguro"""
+    # Validar extensión
+    if not any(filename.lower().endswith(ext) for ext in ALLOWED_EXTENSIONS):
+        return False
+    
+    # Validar tamaño
+    if len(content) > MAX_FILE_SIZE:
+        return False
+    
+    # Validar que no esté vacío
+    if len(content) < 100:
+        return False
+    
+    return True
+
 
 def parse_excel_row(row: dict) -> dict:
     """
@@ -229,12 +356,19 @@ def parse_excel_row(row: dict) -> dict:
 
 
 @app.post("/samples/import")
-async def import_samples(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def import_samples(
+    file: UploadFile = File(...), 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # ✅ REQUIERE AUTENTICACIÓN
+):
     """
     Importa muestras desde un archivo Excel (.xlsx).
     
-    Formato esperado del archivo Excel:
-    | Codigo_Referencia | Descripcion | Composicion_Quimica | Proveedor | Numero_Lote | Cantidad | Unidad | Linea_Negocio | Zona | Estante | Nivel | Posicion | Ruta_CoA |
+    ✅ MEJORAS IMPLEMENTADAS:
+    - Validación de archivos subidos
+    - Transacciones atómicas (rollback completo si falla)
+    - Logging de auditoría
+    - Límite de errores en respuesta
     
     Retorna:
     - total: Total de registros procesados
@@ -242,8 +376,23 @@ async def import_samples(file: UploadFile = File(...), db: Session = Depends(get
     - failed: Registros que fallaron
     - errors: Lista de errores por registro
     """
+    # ✅ LOGGING: Inicio de importación
+    logger.info(f"Usuario {current_user.username} iniciando importación de muestras")
+    
+    # Validar extensión
     if not file.filename.endswith('.xlsx'):
+        logger.warning(f"Usuario {current_user.username} intentó importar archivo no válido: {file.filename}")
         raise HTTPException(status_code=400, detail="Solo se aceptan archivos .xlsx")
+    
+    # Leer y validar contenido
+    content = await file.read()
+    
+    # ✅ Validar archivo con la función de seguridad
+    if not validate_uploaded_file(file.filename, content):
+        raise HTTPException(
+            status_code=400, 
+            detail="Archivo inválido: asegurese de usar un archivo .xlsx válido (máx 10MB)"
+        )
     
     # Guardar archivo temporalmente
     with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
@@ -273,15 +422,17 @@ async def import_samples(file: UploadFile = File(...), db: Session = Depends(get
         failed = 0
         errors = []
         
-        for row_idx, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
-            # Crear diccionario con encabezados
-            row_dict = {headers[i]: row[i] for i in range(len(headers)) if headers[i]}
-            
-            # Verificar que no esté vacío
-            if not row_dict.get('Codigo_Referencia'):
-                continue
-            
-            try:
+        # ✅ TRANSACCIÓN: Procesar todas las filas en una sola transacción
+        # Si falla alguna, se hace rollback de todo
+        try:
+            for row_idx, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
+                # Crear diccionario con encabezados
+                row_dict = {headers[i]: row[i] for i in range(len(headers)) if headers[i]}
+                
+                # Verificar que no esté vacío
+                if not row_dict.get('Codigo_Referencia'):
+                    continue
+                
                 # Mapear datos
                 sample_data = parse_excel_row(row_dict)
                 
@@ -309,17 +460,19 @@ async def import_samples(file: UploadFile = File(...), db: Session = Depends(get
                         errors.append(f"Fila {row_idx}: {incompatible}")
                         continue
                 
-                # Crear muestra
+                # Crear muestra (sin commit individual)
                 db_sample = Sample(**sample_data)
                 db.add(db_sample)
-                db.commit()
                 
                 successful += 1
-                
-            except Exception as e:
-                db.rollback()
-                failed += 1
-                errors.append(f"Fila {row_idx}: {str(e)}")
+            
+            # ✅ Commit de todas las muestras juntas - atomic transaction
+            db.commit()
+            
+        except Exception as e:
+            # ✅ Rollback de toda la transacción si hay error
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Error en transacción: {str(e)}")
         
         return {
             "message": "Importación completada",
@@ -332,8 +485,11 @@ async def import_samples(file: UploadFile = File(...), db: Session = Depends(get
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Error en importación: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error al procesar archivo: {str(e)}")
     finally:
+        # ✅ LOGGING: Fin de importación
+        logger.info(f"Importación finalizada - Éxitos: {successful}, Fallidos: {failed}")
         # Limpiar archivo temporal
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
@@ -341,7 +497,14 @@ async def import_samples(file: UploadFile = File(...), db: Session = Depends(get
 # ============ ENDPOINTS DE USUARIOS ============
 
 @app.post("/users/", response_model=schemas.User)
-async def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+async def create_user(
+    user: schemas.UserCreate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # ✅ REQUIERE AUTENTICACIÓN
+):
+    # ✅ Solo administradores pueden crear usuarios
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Solo administradores pueden crear usuarios")
     # Verificar si el usuario ya existe
     existing_user = db.query(User).filter(
         (User.username == user.username) | (User.email == user.email)
@@ -362,14 +525,26 @@ async def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 @app.post("/login/")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """
+    Endpoint de autenticación. Retorna JWT token.
+    ✅ LOGGING: Registra intentos de login.
+    """
     user = db.query(User).filter(User.username == form_data.username).first()
+    
     if not user or not verify_password(form_data.password, user.hashed_password):
+        # ✅ LOGGING: Registrar intento fallido
+        logger.warning(f"Intento de login fallido para usuario: {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
     access_token = create_access_token(data={"sub": user.username})
+    
+    # ✅ LOGGING: Registrar login exitoso
+    logger.info(f"Login exitoso para usuario: {user.username} - Rol: {user.role}")
+    
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/users/me", response_model=schemas.User)
@@ -415,7 +590,11 @@ def check_chemical_compatibility(chemical_composition: str, zone: str, level: st
 # ============ ENDPOINTS DE PDF ============
 
 @app.get("/samples/{sample_id}/pdf")
-async def get_sample_pdf(sample_id: int, db: Session = Depends(get_db)):
+async def get_sample_pdf(
+    sample_id: int, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # ✅ REQUIERE AUTENTICACIÓN
+):
     """
     Retorna el PDF del Certificado de Análisis (CoA) de una muestra.
     Si no existe el archivo, retorna un error 404.
@@ -427,12 +606,25 @@ async def get_sample_pdf(sample_id: int, db: Session = Depends(get_db)):
     if not sample_obj.coa_path:
         raise HTTPException(status_code=404, detail="PDF de CoA no encontrado para esta muestra")
     
-    # Verificar que el archivo existe
-    if not os.path.exists(sample_obj.coa_path):
-        raise HTTPException(status_code=404, detail=f"Archivo PDF no encontrado en la ruta: {sample_obj.coa_path}")
+    # ✅ SEGURIDAD: Validar ruta para prevenir Path Traversal
+    # Convertir a ruta absoluta y normalizar
+    try:
+        file_path = os.path.abspath(sample_obj.coa_path)
+        coa_base = os.path.abspath(COA_BASE_DIR)
+        
+        # Verificar que el archivo está dentro del directorio base permitido
+        if not file_path.startswith(coa_base):
+            raise HTTPException(status_code=403, detail="Ruta no permitida - acceso denegado")
+        
+        # Verificar que el archivo existe
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail=f"Archivo PDF no encontrado en la ruta: {sample_obj.coa_path}")
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al acceder al archivo: {str(e)}")
     
     return FileResponse(
-        sample_obj.coa_path, 
+        file_path, 
         media_type='application/pdf',
         filename=f"CoA_{sample_obj.reference_code}_{sample_obj.batch_number}.pdf"
     )
@@ -440,7 +632,12 @@ async def get_sample_pdf(sample_id: int, db: Session = Depends(get_db)):
 # ============ ENDPOINTS DE ETIQUETAS ============
 
 @app.post("/samples/{sample_id}/labels", response_model=LabelGenerateResponse)
-async def generate_labels(sample_id: int, label_request: LabelGenerate, db: Session = Depends(get_db)):
+async def generate_labels(
+    sample_id: int, 
+    label_request: LabelGenerate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # ✅ REQUIERE AUTENTICACIÓN
+):
     """
     Genera etiquetas de alistamiento para una muestra.
     
@@ -500,7 +697,8 @@ async def generate_labels(sample_id: int, label_request: LabelGenerate, db: Sess
 @app.post("/compatibility/", response_model=schemas.ChemicalCompatibility)
 async def create_compatibility_rule(
     compatibility: schemas.ChemicalCompatibilityCreate, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # ✅ REQUIERE AUTENTICACIÓN
 ):
     """
     Crea una regla de compatibilidad química.
@@ -513,9 +711,13 @@ async def create_compatibility_rule(
     return db_compatibility
 
 @app.get("/compatibility/", response_model=List[schemas.ChemicalCompatibility])
-async def read_compatibility_rules(db: Session = Depends(get_db)):
+async def read_compatibility_rules(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # ✅ REQUIERE AUTENTICACIÓN
+):
     """
     Lista todas las reglas de compatibilidad química.
+    Requiere autenticación para proteger información sensible.
     """
     rules = db.query(ChemicalCompatibility).all()
     return rules

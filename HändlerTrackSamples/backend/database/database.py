@@ -7,8 +7,10 @@ import os
 # Cargar variables de entorno al inicio
 load_dotenv()
 
-# Configuración de base de datos desde variables de entorno
-DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://root:password@localhost:3306/hander_track_samples")
+# Configuración de base de datos - REQUERIDA (sin valores por defecto inseguros)
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL es requerida. Configure la variable de entorno DATABASE_URL")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

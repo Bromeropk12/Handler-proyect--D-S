@@ -13,8 +13,11 @@ import os
 # Cargar variables de entorno
 load_dotenv()
 
-# Configuración de seguridad desde variables de entorno
-SECRET_KEY = os.getenv("SECRET_KEY", "handler-tracksamples-default-secret-key")
+# Configuración de seguridad - REQUERIDA (sin valores por defecto inseguros)
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY es requerida. Configure la variable de entorno SECRET_KEY")
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login/")

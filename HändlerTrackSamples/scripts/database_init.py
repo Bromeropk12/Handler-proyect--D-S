@@ -18,13 +18,19 @@ def init_db():
     # Cargar variables de entorno
     load_dotenv()
     
-    # Obtener URL de la base de datos
-    DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://root:password@localhost:3306/hander_track_samples")
+    # Obtener URL de la base de datos (OBLIGATORIA)
+    DATABASE_URL = os.getenv("DATABASE_URL")
+    
+    if not DATABASE_URL:
+        print("ERROR: DATABASE_URL no está configurada")
+        print("Por favor configure la variable de entorno DATABASE_URL")
+        print("Ejemplo: mysql+pymysql://root:password@localhost:3306/handler_tracksamples")
+        return False
     
     print("=" * 60)
     print("INICIALIZACIÓN DE BASE DE DATOS - HÄNDLER TRACKSAMPLES")
     print("=" * 60)
-    print(f"\nURL de conexión: {DATABASE_URL}")
+    print(f"\nURL de conexión: {DATABASE_URL.replace(DATABASE_URL.split(':')[2].split('@')[0], '****')}")  # Ocultar contraseña
     
     try:
         # Crear conexión sin especificar base de datos
