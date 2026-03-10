@@ -1,0 +1,46 @@
+# ============================================================
+# HÄNDLER TRACKSAMPLES - DEPENDENCIAS DEL BACKEND
+# ============================================================
+# Versiones actualizadas y compatibles entre sí
+# Generated: 2026
+# ============================================================
+
+# Framework principal
+fastapi==0.135.1
+uvicorn[standard]==0.34.0
+
+# Base de datos
+sqlalchemy==2.0.36
+pymysql==1.1.1
+alembic==1.14.0
+
+# Validación de datos
+pydantic==2.12.5
+pydantic[email]==2.12.5
+email-validator==2.2.0
+
+# Autenticación y seguridad
+python-jose[cryptography]==3.3.0
+bcrypt==4.3.0
+python-multipart==0.0.20
+
+# Utilidades
+python-dotenv==1.0.1
+python-dateutil==2.9.0
+openpyxl==3.1.5
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.25.2
+pytest-cov==6.0.0
+httpx==0.28.1
+
+# Servidor
+starlette==0.52.1
+anyio==3.7.1
+
+# CORS
+itsdangerous==2.2.0
+
+# Para desarrollo
+colorama==0.4.6

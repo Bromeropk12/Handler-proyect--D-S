@@ -1,0 +1,13 @@
+{
+  "venvPath": ".",
+  "pythonVersion": "3.11",
+  "executionEnvironments": [
+    {
+      "root": "."
+    }
+  ],
+  "reportMissingModuleSource": "none",
+  "extraPaths": [
+    "C:\\Users\\Briann\\AppData\\Roaming\\Python\\Python311\\site-packages"
+  ]
+}
