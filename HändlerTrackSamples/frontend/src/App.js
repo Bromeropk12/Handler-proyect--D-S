@@ -4,17 +4,11 @@ import { ThemeProvider, createTheme, CssBaseline, Box, CircularProgress } from '
 
 // Context
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { SamplesProvider } from './context/SamplesContext';
 
-// Componentes
+// Componentes - Solo los necesarios
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Samples from './pages/Samples';
-import SampleDetail from './pages/SampleDetail';
-import Movements from './pages/Movements';
-import Compatibility from './pages/Compatibility';
-import Import from './pages/Import';
 import ChangePassword from './pages/ChangePassword';
+import Welcome from './pages/Welcome';
 import Layout from './components/Layout';
 
 // Tema personalizado estilo Fluent Design (Windows 11)
@@ -40,12 +34,6 @@ const theme = createTheme({
       default: '#f5f5f5',
       paper: '#ffffff',
     },
-    // Colores por línea de negocio
-    businessLine: {
-      cosmetics: '#9c27b0',  // Morado - Cosmética
-      industrial: '#1976d2',  // Azul - Industrial
-      pharma: '#2e7d32',      // Verde - Farma
-    }
   },
   typography: {
     fontFamily: '"Segoe UI Variable", "Segoe UI", "Helvetica", "Arial", sans-serif',
@@ -54,7 +42,7 @@ const theme = createTheme({
     h3: { fontSize: '1.75rem', fontWeight: 500 },
   },
   shape: {
-    borderRadius: 8, // Windows 11 estilo
+    borderRadius: 8,
   },
   components: {
     MuiButton: {
@@ -117,31 +105,25 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <SamplesProvider>
-          <Router>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route 
-                path="/*" 
-                element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Routes>
-                        <Route path="/" element={<Dashboard />} />
-                        <Route path="/samples" element={<Samples />} />
-                        <Route path="/samples/:id" element={<SampleDetail />} />
-                        <Route path="/movements" element={<Movements />} />
-                        <Route path="/compatibility" element={<Compatibility />} />
-                        <Route path="/import" element={<Import />} />
-                        <Route path="/change-password" element={<ChangePassword />} />
-                      </Routes>
-                    </Layout>
-                  </ProtectedRoute>
-                } 
-              />
-            </Routes>
-          </Router>
-        </SamplesProvider>
+        <Router>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route 
+              path="/*" 
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Routes>
+                      <Route path="/" element={<Welcome />} />
+                      <Route path="/welcome" element={<Welcome />} />
+                      <Route path="/change-password" element={<ChangePassword />} />
+                    </Routes>
+                  </Layout>
+                </ProtectedRoute>
+              } 
+            />
+          </Routes>
+        </Router>
       </AuthProvider>
     </ThemeProvider>
   );

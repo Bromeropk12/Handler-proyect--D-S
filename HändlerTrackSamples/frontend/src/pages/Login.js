@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Slide } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
@@ -22,15 +22,36 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [activePanel, setActivePanel] = useState(null);
+  const [showError, setShowError] = useState(false);
 
   // Context
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // Efecto para controlar el scroll - deshabilitar en página de login
+  useEffect(() => {
+    document.body.classList.add('no-scroll');
+    return () => {
+      document.body.classList.remove('no-scroll');
+    };
+  }, []);
+
+  // Efecto para cerrar automáticamente el error después de 15 segundos
+  useEffect(() => {
+    if (showError && error) {
+      const timer = setTimeout(() => {
+        setShowError(false);
+        setError('');
+      }, 15000); // 15 segundos
+      return () => clearTimeout(timer);
+    }
+  }, [showError, error]);
+
   // Handlers
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setShowError(false);
     setLoading(true);
 
     const result = await login(username, password);
@@ -41,6 +62,7 @@ const Login = () => {
       navigate('/');
     } else {
       setError(result.message);
+      setShowError(true);
     }
   };
 
@@ -50,6 +72,11 @@ const Login = () => {
 
   const handleClosePanel = () => {
     setActivePanel(null);
+  };
+
+  const handleDismissError = () => {
+    setError('');
+    setShowError(false);
   };
 
   return (
@@ -63,10 +90,12 @@ const Login = () => {
           username={username}
           password={password}
           error={error}
+          showError={showError}
           loading={loading}
           onUsernameChange={setUsername}
           onPasswordChange={setPassword}
           onSubmit={handleSubmit}
+          onDismissError={handleDismissError}
         />
       </Box>
 

@@ -7,13 +7,20 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
+import { keyframes } from '@mui/system';
 import { COLORS, loginBoxStyles } from '../constants/theme';
+
+// Animación de entrada
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
 
 /**
  * Componente: LoginForm
  * Descripción: Formulario de autenticación de usuario
  */
-const LoginForm = ({ username, password, error, loading, onUsernameChange, onPasswordChange, onSubmit }) => {
+const LoginForm = ({ username, password, error, showError, loading, onUsernameChange, onPasswordChange, onSubmit, onDismissError }) => {
   return (
     <Box sx={loginBoxStyles}>
       {/* Logo */}
@@ -34,11 +41,34 @@ const LoginForm = ({ username, password, error, loading, onUsernameChange, onPas
       </Typography>
 
       {/* Mensaje de error */}
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+      <Box sx={{ 
+        minHeight: showError && error ? 80 : 0, 
+        transition: 'min-height 0.3s ease',
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'flex-start'
+      }}>
+        {showError && error && (
+          <Alert 
+            severity="error" 
+            sx={{ 
+              width: '100%',
+              '& .MuiAlert-icon': { fontSize: 28 },
+              animation: `${fadeIn} 0.3s ease`
+            }}
+            variant="filled"
+            onClose={onDismissError}
+          >
+            <Typography variant="body2" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box component="span" sx={{ fontSize: 20 }}>⚠️</Box>
+              Error de autenticación
+            </Typography>
+            <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
+              {error}
+            </Typography>
+          </Alert>
+        )}
+      </Box>
 
       {/* Formulario */}
       <form onSubmit={onSubmit}>

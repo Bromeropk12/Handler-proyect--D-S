@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -21,32 +21,30 @@ import {
 } from '@mui/material';
 import {
   Menu as MenuIcon,
-  Dashboard as DashboardIcon,
-  Inventory as SamplesIcon,
-  SwapHoriz as MovementsIcon,
-  Science as CompatibilityIcon,
-  AccountCircle,
-  ExitToApp,
-  CloudUpload as ImportIcon,
   VpnKey as PasswordIcon,
+  ExitToApp,
+  PhotoCamera,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
 const DRAWER_WIDTH = 260;
 
+// Menú simplificado - solo cambio de contraseña
 const menuItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-  { text: 'Muestras', icon: <SamplesIcon />, path: '/samples' },
-  { text: 'Movimientos', icon: <MovementsIcon />, path: '/movements' },
-  { text: 'Compatibilidad', icon: <CompatibilityIcon />, path: '/compatibility' },
-  { text: 'Importar Excel', icon: <ImportIcon />, path: '/import' },
+  { text: 'Cambiar Contraseña', icon: <PasswordIcon />, path: '/change-password' },
 ];
 
 const Layout = ({ children }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [anchorElUser, setAnchorElUser] = useState(null);
+  const [profileImage, setProfileImage] = useState(() => {
+    // Cargar imagen de perfil desde localStorage al iniciar
+    const savedImage = localStorage.getItem('userProfileImage');
+    return savedImage || null;
+  });
+  const fileInputRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
@@ -55,35 +53,55 @@ const Layout = ({ children }) => {
     setMobileOpen(!mobileOpen);
   };
 
-  const handleMenu = (event) => {
-    setAnchorEl(event.currentTarget);
+  const handleUserMenu = (event) => {
+    setAnchorElUser(event.currentTarget);
   };
 
-  const handleClose = () => {
-    setAnchorEl(null);
+  const handleCloseUserMenu = () => {
+    setAnchorElUser(null);
   };
 
   const handleLogout = () => {
-    handleClose();
+    handleCloseUserMenu();
     logout();
     navigate('/login');
   };
 
   const handleChangePassword = () => {
-    handleClose();
+    handleCloseUserMenu();
     navigate('/change-password');
+  };
+
+  const handleProfileClick = () => {
+    handleCloseUserMenu();
+    fileInputRef.current?.click();
+  };
+
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64Image = e.target.result;
+        setProfileImage(base64Image);
+        // Guardar en localStorage para persistencia
+        localStorage.setItem('userProfileImage', base64Image);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Logo */}
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <img 
-          src="/logo.png" 
-          alt="Händler Logo" 
-          style={{ height: 40, objectFit: 'contain' }} 
-        />
+        <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}>
+          H
+        </Avatar>
         <Box>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Händler
+          </Typography>
           <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', lineHeight: 1.2 }}>
             TrackSamples
           </Typography>
@@ -92,8 +110,8 @@ const Layout = ({ children }) => {
       
       <Divider />
       
-      {/* Menú */}
-      <List sx={{ flexGrow: 1, px: 1 }}>
+      {/* Menú simplificado */}
+      <List sx={{ flexGrow: 1, px: 1, py: 2 }}>
         {menuItems.map((item) => (
           <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
             <ListItemButton
@@ -121,14 +139,38 @@ const Layout = ({ children }) => {
 
       <Divider />
       
-      {/* Usuario */}
+      {/* Usuario - Ahora es un botón que despliega menú */}
       <Box sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Avatar sx={{ bgcolor: 'primary.main', width: 36, height: 36 }}>
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleImageChange}
+          accept="image/*"
+          style={{ display: 'none' }}
+        />
+        <Box
+          onClick={handleUserMenu}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            p: 1,
+            borderRadius: 2,
+            cursor: 'pointer',
+            transition: 'background-color 0.2s',
+            '&:hover': {
+              bgcolor: 'action.hover',
+            },
+          }}
+        >
+          <Avatar
+            src={profileImage || undefined}
+            sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}
+          >
             {user?.full_name?.charAt(0) || 'U'}
           </Avatar>
-          <Box sx={{ overflow: 'hidden' }}>
-            <Typography variant="subtitle2" noWrap>
+          <Box sx={{ overflow: 'hidden', textAlign: 'left' }}>
+            <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
               {user?.full_name || 'Usuario'}
             </Typography>
             <Typography variant="caption" color="text.secondary" noWrap>
@@ -136,6 +178,41 @@ const Layout = ({ children }) => {
             </Typography>
           </Box>
         </Box>
+
+        {/* Menú de usuario */}
+        <Menu
+          anchorEl={anchorElUser}
+          open={Boolean(anchorElUser)}
+          onClose={handleCloseUserMenu}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'left',
+          }}
+          transformOrigin={{
+            vertical: 'bottom',
+            horizontal: 'left',
+          }}
+        >
+          <MenuItem onClick={handleProfileClick}>
+            <ListItemIcon>
+              <PhotoCamera fontSize="small" />
+            </ListItemIcon>
+            Cambiar Foto de Perfil
+          </MenuItem>
+          <MenuItem onClick={handleChangePassword}>
+            <ListItemIcon>
+              <PasswordIcon fontSize="small" />
+            </ListItemIcon>
+            Cambiar Contraseña
+          </MenuItem>
+          <Divider />
+          <MenuItem onClick={handleLogout}>
+            <ListItemIcon>
+              <ExitToApp fontSize="small" />
+            </ListItemIcon>
+            Cerrar Sesión
+          </MenuItem>
+        </Menu>
       </Box>
     </Box>
   );
@@ -152,13 +229,9 @@ const Layout = ({ children }) => {
           backdropFilter: 'blur(20px)',
           color: 'text.primary',
           boxShadow: 1,
-          // Región de arrastre para Windows 11
-          WebkitAppRegion: 'drag',
-          pr: '140px', // Padding para botones nativos de Windows
-          userSelect: 'none'
         }}
       >
-        <Toolbar sx={{ WebkitAppRegion: 'no-drag' }}>
+        <Toolbar>
           <IconButton
             color="inherit"
             edge="start"
@@ -168,33 +241,9 @@ const Layout = ({ children }) => {
             <MenuIcon />
           </IconButton>
           
-          <Box sx={{ flexGrow: 1 }} />
-          
-          <IconButton onClick={handleMenu}>
-            <AccountCircle />
-          </IconButton>
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleClose}
-          >
-            <MenuItem disabled>
-              <Typography variant="body2">{user?.email}</Typography>
-            </MenuItem>
-            <MenuItem onClick={handleChangePassword}>
-              <ListItemIcon>
-                <PasswordIcon fontSize="small" />
-              </ListItemIcon>
-              Cambiar Contraseña
-            </MenuItem>
-            <Divider />
-            <MenuItem onClick={handleLogout}>
-              <ListItemIcon>
-                <ExitToApp fontSize="small" />
-              </ListItemIcon>
-              Cerrar Sesión
-            </MenuItem>
-          </Menu>
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            Händler TrackSamples
+          </Typography>
         </Toolbar>
       </AppBar>
 

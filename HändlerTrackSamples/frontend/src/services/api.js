@@ -43,13 +43,12 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Habilitar credenciales para cookies
+  withCredentials: true,
 });
 
 // Interceptor para agregar token desde cookies
 api.interceptors.request.use(
   (config) => {
-    // ✅ MEJORA: Usar cookies en lugar de localStorage para mayor seguridad
     const token = getTokenFromCookie();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -66,9 +65,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expirado o inválido - limpiar cookie
-      removeTokenCookie();
-      window.location.href = '/login';
+      // Solo redirigir si no estamos en la página de login
+      const isLoginPage = window.location.pathname === '/login' || window.location.pathname === '/';
+      if (!isLoginPage) {
+        removeTokenCookie();
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -76,35 +78,7 @@ api.interceptors.response.use(
 
 export default api;
 
-// Funciones helper para cada entidad
-export const samplesAPI = {
-  getAll: (params) => api.get('/samples/', { params }),
-  getById: (id) => api.get(`/samples/${id}`),
-  create: (data) => api.post('/samples/', data),
-  update: (id, data) => api.put(`/samples/${id}`, data),
-  delete: (id) => api.delete(`/samples/${id}`),
-  getMovements: (id) => api.get(`/samples/${id}/movements`),
-  generateLabels: (id, data) => api.post(`/samples/${id}/labels`, data),
-  getPdf: (id) => api.get(`/samples/${id}/pdf`, { responseType: 'blob' }),
-  importExcel: (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    return api.post('/samples/import', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-  },
-};
-
-export const movementsAPI = {
-  getAll: (params) => api.get('/movements/', { params }),
-  create: (data) => api.post('/movements/', data),
-};
-
-export const compatibilityAPI = {
-  getAll: () => api.get('/compatibility/'),
-  create: (data) => api.post('/compatibility/', data),
-};
-
+// Funciones de usuarios
 export const usersAPI = {
   getMe: () => api.get('/users/me'),
   create: (data) => api.post('/users/', data),
