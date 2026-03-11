@@ -139,3 +139,40 @@ class LabelGenerateResponse(BaseModel):
     labels: List[LabelData]
     total_labels: int
     message: str
+
+# ============ Esquemas para Cambio de Contraseña ============
+
+class PasswordChangeRequest(BaseModel):
+    """Schema para solicitar cambio de contraseña"""
+    current_password: str = Field(..., description="Contraseña actual del usuario")
+    new_password: str = Field(..., description="Nueva contraseña")
+    confirm_password: str = Field(..., description="Confirmación de la nueva contraseña")
+    
+    @field_validator('new_password')
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        """Valida que la nueva contraseña cumpla con requisitos de seguridad"""
+        if len(v) < 8:
+            raise ValueError('La contraseña debe tener al menos 8 caracteres')
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('La contraseña debe tener al menos una mayúscula')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('La contraseña debe tener al menos una minúscula')
+        if not re.search(r'\d', v):
+            raise ValueError('La contraseña debe tener al menos un número')
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
+            raise ValueError('La contraseña debe tener al menos un carácter especial')
+        return v
+    
+    @field_validator('confirm_password')
+    @classmethod
+    def validate_passwords_match(cls, v: str, info) -> str:
+        """Valida que las contraseñas coincidan"""
+        if 'new_password' in info.data and v != info.data['new_password']:
+            raise ValueError('Las contraseñas no coinciden')
+        return v
+
+class PasswordChangeResponse(BaseModel):
+    """Response para el cambio de contraseña"""
+    success: bool
+    message: str

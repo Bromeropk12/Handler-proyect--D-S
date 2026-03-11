@@ -9,7 +9,7 @@ from models.user import User
 from models.movement import Movement
 from models.chemical_compatibility import ChemicalCompatibility
 import schemas
-from schemas import SampleUpdate, LabelGenerate, LabelData, LabelGenerateResponse
+from schemas import SampleUpdate, LabelGenerate, LabelData, LabelGenerateResponse, PasswordChangeRequest, PasswordChangeResponse
 from security import get_current_user, get_password_hash, verify_password, create_access_token
 from typing import List
 import os
@@ -282,6 +282,90 @@ async def get_sample_movements(
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB máximo
 ALLOWED_EXTENSIONS = ['.xlsx']
 
+# Configuración de la bodega
+WAREHOUSE_ZONES = {
+    'Cosmética': 'COS',
+    'Industrial': 'IND', 
+    'Farma': 'FAR'
+}
+WAREHOUSE_ROWS = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+WAREHOUSE_COLUMNS = ['1', '2', '3', '4', '5', '6', '7']
+
+def find_best_position(business_line: str, chemical_composition: str, db: Session) -> dict:
+    """
+    Encuentra la mejor posición para un producto basado en:
+    1. Línea de negocio (zona)
+    2. Compatibilidad química con productos existentes
+    
+    Retorna: {zone, level, position} o None si no hay espacio
+    """
+    # Determinar la zona según línea de negocio
+    zone = WAREHOUSE_ZONES.get(business_line, 'COS')
+    
+    # Obtener productos existentes en esa zona
+    existing_in_zone = db.query(Sample).filter(
+        Sample.zone == zone,
+        Sample.status == 'available'
+    ).all()
+    
+    # Crear mapa de posiciones ocupadas
+    occupied_positions = set()
+    for sample in existing_in_zone:
+        if sample.level and sample.position:
+            occupied_positions.add((sample.level, sample.position))
+    
+    # Obtener reglas de incompatibilidad para esta composición química
+    incompatible_chemicals = set()
+    if chemical_composition:
+        chemicals = [c.strip() for c in chemical_composition.split(',')]
+        for chem in chemicals:
+            compat_rule = db.query(ChemicalCompatibility).filter(
+                ChemicalCompatibility.chemical_group.ilike(f"%{chem}%")
+            ).first()
+            if compat_rule and compat_rule.incompatible_with:
+                for inc in compat_rule.incompatible_with.split(','):
+                    incompatible_chemicals.add(inc.strip().lower())
+    
+    # Buscar la primera posición disponible compatible
+    for level in WAREHOUSE_ROWS:
+        for col in WAREHOUSE_COLUMNS:
+            if (level, col) not in occupied_positions:
+                # Verificar compatibilidad química con productos en posiciones adyacentes
+                if chemical_composition:
+                    adjacent_samples = db.query(Sample).filter(
+                        Sample.zone == zone,
+                        Sample.level == level,
+                        Sample.position == col
+                    ).all()
+                    
+                    is_compatible = True
+                    for adj_sample in adjacent_samples:
+                        if adj_sample.chemical_composition:
+                            adj_chemicals = [c.strip().lower() for c in adj_sample.chemical_composition.split(',')]
+                            for adj_chem in adj_chemicals:
+                                if adj_chem in incompatible_chemicals:
+                                    is_compatible = False
+                                    break
+                        if not is_compatible:
+                            break
+                    
+                    if not is_compatible:
+                        continue
+                
+                return {'zone': zone, 'level': level, 'position': col}
+    
+    # Si no hay espacio, buscar en otras zonas
+    for other_zone in WAREHOUSE_ZONES.values():
+        if other_zone == zone:
+            continue
+        for level in WAREHOUSE_ROWS:
+            for col in WAREHOUSE_COLUMNS:
+                if (level, col) not in occupied_positions:
+                    return {'zone': other_zone, 'level': level, 'position': col}
+    
+    return None  # No hay posiciones disponibles
+
+
 def validate_uploaded_file(filename: str, content: bytes) -> bool:
     """Valida que el archivo subido sea seguro"""
     # Validar extensión
@@ -299,10 +383,11 @@ def validate_uploaded_file(filename: str, content: bytes) -> bool:
     return True
 
 
-def parse_excel_row(row: dict) -> dict:
+def parse_excel_row(row: dict, auto_assign: bool = True, db: Session = None) -> dict:
     """
     Mapea las columnas del Excel a los campos del modelo Sample.
-    Se espera que el Excel tenga los siguientes encabezados:
+    
+    Plantilla simplificada (auto-asignación de posición):
     - Codigo_Referencia
     - Descripcion
     - Composicion_Quimica
@@ -311,10 +396,12 @@ def parse_excel_row(row: dict) -> dict:
     - Cantidad
     - Unidad
     - Linea_Negocio
-    - Zona
-    - Fila (A-G)
-    - Columna (1-7)
     - Ruta_CoA
+    
+    Opcional (especificar posición manualmente):
+    - Zona
+    - Fila
+    - Columna
     """
     mapping = {
         'Codigo_Referencia': 'reference_code',
@@ -351,6 +438,20 @@ def parse_excel_row(row: dict) -> dict:
         result['status'] = 'available'
     if 'is_compatible' not in result:
         result['is_compatible'] = True
+    
+    # Auto-asignar posición si no se específica
+    if auto_assign and db:
+        position = find_best_position(
+            result.get('business_line', 'Cosmética'),
+            result.get('chemical_composition', ''),
+            db
+        )
+        if position:
+            result['zone'] = position['zone']
+            result['level'] = position['level']
+            result['position'] = position['position']
+        else:
+            raise Exception("No hay posiciones disponibles en la bodega")
     
     return result
 
@@ -550,6 +651,55 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 @app.get("/users/me", response_model=schemas.User)
 async def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+# ============ ENDPOINT DE CAMBIO DE CONTRASEÑA ============
+
+@app.post("/users/change-password", response_model=PasswordChangeResponse)
+async def change_password(
+    password_data: PasswordChangeRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Endpoint para cambiar la contraseña del usuario actual.
+    
+    Seguridad:
+    - Requiere autenticación JWT
+    - Verifica la contraseña actual antes de cambiar
+    - Usa bcrypt para hashear la nueva contraseña
+    - Registra el cambio en los logs
+    
+    Validaciones:
+    - La nueva contraseña debe cumplir con los requisitos de seguridad
+    - Las contraseñas nueva y de confirmación deben coincidir
+    """
+    # ✅ VERIFICAR CONTRASEÑA ACTUAL
+    if not verify_password(password_data.current_password, current_user.hashed_password):
+        logger.warning(f"Usuario {current_user.username} intentó cambio de contraseña con contraseña actual incorrecta")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La contraseña actual es incorrecta"
+        )
+    
+    # ✅ VERIFICAR QUE LA NUEVA CONTRASEÑA NO SEA IGUAL A LA ACTUAL
+    if verify_password(password_data.new_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La nueva contraseña no puede ser igual a la contraseña actual"
+        )
+    
+    # ✅ GENERAR NUEVO HASH Y GUARDAR
+    new_hash = get_password_hash(password_data.new_password)
+    current_user.hashed_password = new_hash
+    db.commit()
+    
+    # ✅ LOGGING: Registrar cambio de contraseña exitoso
+    logger.info(f"Usuario {current_user.username} cambió su contraseña exitosamente")
+    
+    return PasswordChangeResponse(
+        success=True,
+        message="Contraseña cambiada exitosamente"
+    )
 
 
 def check_chemical_compatibility(chemical_composition: str, zone: str, level: str, position: str, db: Session):

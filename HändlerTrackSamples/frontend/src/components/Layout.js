@@ -28,6 +28,7 @@ import {
   AccountCircle,
   ExitToApp,
   CloudUpload as ImportIcon,
+  VpnKey as PasswordIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
@@ -66,6 +67,11 @@ const Layout = ({ children }) => {
     handleClose();
     logout();
     navigate('/login');
+  };
+
+  const handleChangePassword = () => {
+    handleClose();
+    navigate('/change-password');
   };
 
   const drawer = (
@@ -174,6 +180,12 @@ const Layout = ({ children }) => {
           >
             <MenuItem disabled>
               <Typography variant="body2">{user?.email}</Typography>
+            </MenuItem>
+            <MenuItem onClick={handleChangePassword}>
+              <ListItemIcon>
+                <PasswordIcon fontSize="small" />
+              </ListItemIcon>
+              Cambiar Contraseña
             </MenuItem>
             <Divider />
             <MenuItem onClick={handleLogout}>

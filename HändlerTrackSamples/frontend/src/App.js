@@ -14,6 +14,7 @@ import SampleDetail from './pages/SampleDetail';
 import Movements from './pages/Movements';
 import Compatibility from './pages/Compatibility';
 import Import from './pages/Import';
+import ChangePassword from './pages/ChangePassword';
 import Layout from './components/Layout';
 
 // Tema personalizado estilo Fluent Design (Windows 11)
@@ -132,6 +133,7 @@ function App() {
                         <Route path="/movements" element={<Movements />} />
                         <Route path="/compatibility" element={<Compatibility />} />
                         <Route path="/import" element={<Import />} />
+                        <Route path="/change-password" element={<ChangePassword />} />
                       </Routes>
                     </Layout>
                   </ProtectedRoute>
