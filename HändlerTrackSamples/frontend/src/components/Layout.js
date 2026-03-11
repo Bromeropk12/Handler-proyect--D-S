@@ -18,22 +18,89 @@ import {
   MenuItem,
   useTheme,
   useMediaQuery,
+  alpha,
 } from '@mui/material';
+import { keyframes } from '@mui/system';
 import {
   Menu as MenuIcon,
   VpnKey as PasswordIcon,
   ExitToApp,
   PhotoCamera,
   Home,
+  Inventory2 as InventoryIcon,
+  Science as ScienceIcon,
+  LocalShipping as ShippingIcon,
+  Warning as WarningIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
-const DRAWER_WIDTH = 260;
+// Animación de pulso
+const pulse = keyframes`
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(123, 31, 162, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(123, 31, 162, 0);
+  }
+`;
 
-// Menú del sidebar
+// Colores de marca
+const COLORS = {
+  primary: '#7b1fa2',
+  primaryLight: '#9c27b0',
+  primaryDark: '#6a1b9a',
+  gold: '#fcdd38',
+};
+
+const DRAWER_WIDTH = 280;
+
+// Menú del sidebar con iconos mejorados
 const menuItems = [
-  { text: 'Home', icon: <Home />, path: '/' },
-  { text: 'Cambiar Contraseña', icon: <PasswordIcon />, path: '/change-password' },
+  { 
+    text: 'Inicio', 
+    icon: <Home />, 
+    path: '/',
+    color: COLORS.primary,
+  },
+  { 
+    text: 'Cambiar Contraseña', 
+    icon: <PasswordIcon />, 
+    path: '/change-password',
+    color: '#388e3c',
+  },
+];
+
+// Menú de herramientas (futuro)
+const futureMenuItems = [
+  { 
+    text: 'Muestras', 
+    icon: <InventoryIcon />, 
+    path: '/samples',
+    color: '#0288d1',
+    disabled: true,
+  },
+  { 
+    text: 'Movimientos', 
+    icon: <ShippingIcon />, 
+    path: '/movements',
+    color: '#f57c00',
+    disabled: true,
+  },
+  { 
+    text: 'Compatibilidad', 
+    icon: <ScienceIcon />, 
+    path: '/compatibility',
+    color: '#388e3c',
+    disabled: true,
+  },
+  { 
+    text: 'Alertas', 
+    icon: <WarningIcon />, 
+    path: '/alerts',
+    color: '#d32f2f',
+    disabled: true,
+  },
 ];
 
 const Layout = ({ children }) => {
@@ -42,7 +109,6 @@ const Layout = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorElUser, setAnchorElUser] = useState(null);
   const [profileImage, setProfileImage] = useState(() => {
-    // Cargar imagen de perfil desde localStorage al iniciar
     const savedImage = localStorage.getItem('userProfileImage');
     return savedImage || null;
   });
@@ -86,24 +152,97 @@ const Layout = ({ children }) => {
       reader.onload = (e) => {
         const base64Image = e.target.result;
         setProfileImage(base64Image);
-        // Guardar en localStorage para persistencia
         localStorage.setItem('userProfileImage', base64Image);
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const MenuItemComponent = ({ item }) => (
+    <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+      <ListItemButton
+        selected={location.pathname === item.path}
+        disabled={item.disabled}
+        onClick={() => {
+          if (!item.disabled) {
+            navigate(item.path);
+            if (isMobile) setMobileOpen(false);
+          }
+        }}
+        sx={{
+          borderRadius: 2.5,
+          mx: 1,
+          py: 1.2,
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&.Mui-selected': {
+            background: `linear-gradient(135deg, ${alpha(item.color, 0.15)} 0%, ${alpha(item.color, 0.08)} 100%)`,
+            borderLeft: `3px solid ${item.color}`,
+            '&:hover': {
+              background: `linear-gradient(135deg, ${alpha(item.color, 0.2)} 0%, ${alpha(item.color, 0.1)} 100%)`,
+            },
+            '& .MuiListItemIcon-root': {
+              color: item.color,
+            },
+            '& .MuiListItemText-primary': {
+              fontWeight: 600,
+              color: item.color,
+            },
+          },
+          '&:hover': {
+            background: alpha(item.color, 0.05),
+            transform: 'translateX(4px)',
+          },
+        }}
+      >
+        <ListItemIcon sx={{ 
+          minWidth: 44,
+          color: item.disabled ? 'text.disabled' : 'text.secondary',
+        }}>
+          {item.icon}
+        </ListItemIcon>
+        <ListItemText 
+          primary={item.text}
+          primaryTypographyProps={{
+            fontSize: '0.9rem',
+            fontWeight: 500,
+          }}
+        />
+        {item.disabled && (
+          <Box
+            sx={{
+              px: 1,
+              py: 0.25,
+              borderRadius: 1,
+              bgcolor: alpha('#999', 0.1),
+            }}
+          >
+            <Typography variant="caption" sx={{ fontSize: '0.65rem', color: 'text.disabled' }}>
+              Pronto
+            </Typography>
+          </Box>
+        )}
+      </ListItemButton>
+    </ListItem>
+  );
+
   const drawer = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Logo */}
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#fafafa' }}>
+      {/* Logo y marca */}
       <Box 
         sx={{ 
-          p: 2, 
+          px: 2,
           display: 'flex', 
           alignItems: 'center', 
-          gap: 2,
+          gap: 1.5,
           cursor: 'pointer',
-          '&:hover': { bgcolor: 'action.hover' }
+          background: `linear-gradient(135deg, ${alpha(COLORS.primary, 0.03)} 0%, transparent 100%)`,
+          borderBottom: `1px solid ${alpha(COLORS.primary, 0.08)}`,
+          transition: 'all 0.3s ease',
+          height: 64,
+          boxSizing: 'border-box',
+          '&:hover': { 
+            bgcolor: alpha(COLORS.primary, 0.08),
+          }
         }}
         onClick={() => navigate('/')}
       >
@@ -111,51 +250,102 @@ const Layout = ({ children }) => {
           component="img"
           src="/Logo-Handler.png"
           alt="Händler Logo"
-          sx={{ width: 45, height: 45, objectFit: 'contain' }}
-          onError={(e) => { e.target.style.display = 'none'; }}
+          sx={{ 
+            width: 'auto', 
+            height: 40, 
+            objectFit: 'contain',
+            flexShrink: 0,
+          }}
+          onError={(e) => { 
+            // Si la imagen no carga, mostrar texto de respaldo
+            e.target.style.display = 'none'; 
+            e.target.nextSibling.style.display = 'block';
+          }}
         />
-        <Box>
-          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
+        {/* Texto de respaldo si la imagen no carga */}
+        <Box sx={{ display: 'none', alignItems: 'center', gap: 1 }}>
+          <Box
+            sx={{
+              width: 36,
+              height: 36,
+              borderRadius: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryLight} 100%)`,
+              boxShadow: `0 2px 8px ${alpha(COLORS.primary, 0.3)}`,
+              flexShrink: 0,
+            }}
+          >
+            <Typography sx={{ color: 'white', fontWeight: 800, fontSize: '1rem', lineHeight: 1 }}>
+              H
+            </Typography>
+          </Box>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              fontWeight: 700, 
+              fontSize: '1rem',
+              background: `linear-gradient(135deg, ${COLORS.primaryDark} 0%, ${COLORS.primary} 100%)`,
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
             Händler
-          </Typography>
-          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', lineHeight: 1.2, fontSize: '0.7rem' }}>
-            TrackSamples
           </Typography>
         </Box>
       </Box>
       
-      <Divider />
-      
-      {/* Menú simplificado */}
-      <List sx={{ flexGrow: 1, px: 1, py: 2 }}>
-        {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
-            <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => {
-                navigate(item.path);
-                if (isMobile) setMobileOpen(false);
-              }}
-              sx={{
-                borderRadius: 2,
-                '&.Mui-selected': {
-                  bgcolor: 'primary.light',
-                  color: 'white',
-                  '&:hover': { bgcolor: 'primary.main' },
-                  '& .MuiListItemIcon-root': { color: 'white' },
-                },
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
+      {/* Sección principal */}
+      <Box sx={{ pt: 2 }}>
+        <Typography 
+          variant="caption" 
+          sx={{ 
+            px: 3, 
+            color: 'text.disabled', 
+            fontWeight: 600,
+            fontSize: '0.65rem',
+            letterSpacing: '1px',
+            textTransform: 'uppercase',
+          }}
+        >
+          Menú Principal
+        </Typography>
+        <List sx={{ mt: 0.5 }}>
+          {menuItems.map((item) => (
+            <MenuItemComponent key={item.text} item={item} />
+          ))}
+        </List>
+      </Box>
 
-      <Divider />
+      <Divider sx={{ mx: 2, my: 1, opacity: 0.5 }} />
       
-      {/* Usuario - Ahora es un botón que despliega menú */}
+      {/* Sección de herramientas */}
+      <Box sx={{ flexGrow: 1 }}>
+        <Typography 
+          variant="caption" 
+          sx={{ 
+            px: 3, 
+            color: 'text.disabled', 
+            fontWeight: 600,
+            fontSize: '0.65rem',
+            letterSpacing: '1px',
+            textTransform: 'uppercase',
+          }}
+        >
+          Módulos
+        </Typography>
+        <List sx={{ mt: 0.5 }}>
+          {futureMenuItems.map((item) => (
+            <MenuItemComponent key={item.text} item={item} />
+          ))}
+        </List>
+      </Box>
+
+      <Divider sx={{ mx: 2, opacity: 0.5 }} />
+      
+      {/* Usuario */}
       <Box sx={{ p: 2 }}>
         <input
           type="file"
@@ -170,29 +360,57 @@ const Layout = ({ children }) => {
             display: 'flex',
             alignItems: 'center',
             gap: 1.5,
-            p: 1,
-            borderRadius: 2,
+            p: 1.5,
+            borderRadius: 2.5,
             cursor: 'pointer',
-            transition: 'background-color 0.2s',
+            transition: 'all 0.3s ease',
+            background: `linear-gradient(135deg, ${alpha(COLORS.primary, 0.04)} 0%, ${alpha(COLORS.primary, 0.01)} 100%)`,
+            border: `1px solid ${alpha(COLORS.primary, 0.08)}`,
             '&:hover': {
-              bgcolor: 'action.hover',
+              background: `linear-gradient(135deg, ${alpha(COLORS.primary, 0.08)} 0%, ${alpha(COLORS.primary, 0.03)} 100%)`,
+              borderColor: alpha(COLORS.primary, 0.15),
+              transform: 'scale(1.02)',
             },
           }}
         >
           <Avatar
             src={profileImage || undefined}
-            sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}
+            sx={{ 
+              bgcolor: COLORS.primary, 
+              width: 44, 
+              height: 44,
+              boxShadow: `0 4px 12px ${alpha(COLORS.primary, 0.25)}`,
+              animation: `${pulse} 3s ease-in-out infinite`,
+            }}
           >
             {user?.full_name?.charAt(0) || 'U'}
           </Avatar>
-          <Box sx={{ overflow: 'hidden', textAlign: 'left' }}>
-            <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
+          <Box sx={{ overflow: 'hidden', textAlign: 'left', flexGrow: 1 }}>
+            <Typography 
+              variant="subtitle2" 
+              noWrap 
+              sx={{ 
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                color: '#1a1a1a',
+              }}
+            >
               {user?.full_name || 'Usuario'}
             </Typography>
-            <Typography variant="caption" color="text.secondary" noWrap>
+            <Typography 
+              variant="caption" 
+              noWrap 
+              sx={{ 
+                color: COLORS.primary,
+                fontWeight: 500,
+                fontSize: '0.7rem',
+                textTransform: 'capitalize',
+              }}
+            >
               {user?.role || 'Operador'}
             </Typography>
           </Box>
+          <SettingsIcon sx={{ color: 'text.disabled', fontSize: 20 }} />
         </Box>
 
         {/* Menú de usuario */}
@@ -208,25 +426,35 @@ const Layout = ({ children }) => {
             vertical: 'bottom',
             horizontal: 'left',
           }}
+          PaperProps={{
+            sx: {
+              mt: 1,
+              borderRadius: 2,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+              border: `1px solid ${alpha(COLORS.primary, 0.1)}`,
+            }
+          }}
         >
           <MenuItem onClick={handleProfileClick}>
             <ListItemIcon>
-              <PhotoCamera fontSize="small" />
+              <PhotoCamera fontSize="small" sx={{ color: COLORS.primary }} />
             </ListItemIcon>
             Cambiar Foto de Perfil
           </MenuItem>
           <MenuItem onClick={handleChangePassword}>
             <ListItemIcon>
-              <PasswordIcon fontSize="small" />
+              <PasswordIcon fontSize="small" sx={{ color: '#388e3c' }} />
             </ListItemIcon>
             Cambiar Contraseña
           </MenuItem>
           <Divider />
           <MenuItem onClick={handleLogout}>
             <ListItemIcon>
-              <ExitToApp fontSize="small" />
+              <ExitToApp fontSize="small" sx={{ color: '#d32f2f' }} />
             </ListItemIcon>
-            Cerrar Sesión
+            <Typography sx={{ color: '#d32f2f', fontWeight: 500 }}>
+              Cerrar Sesión
+            </Typography>
           </MenuItem>
         </Menu>
       </Box>
@@ -234,17 +462,18 @@ const Layout = ({ children }) => {
   );
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f5f5f5' }}>
       {/* AppBar */}
       <AppBar
         position="fixed"
         sx={{
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
           ml: { md: `${DRAWER_WIDTH}px` },
-          bgcolor: 'rgba(255, 255, 255, 0.8)',
+          bgcolor: 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(20px)',
           color: 'text.primary',
-          boxShadow: 1,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+          borderBottom: `1px solid ${alpha(COLORS.primary, 0.08)}`,
         }}
       >
         <Toolbar>
@@ -257,9 +486,20 @@ const Layout = ({ children }) => {
             <MenuIcon />
           </IconButton>
           
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Händler TrackSamples
-          </Typography>
+          <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+            <Typography 
+              variant="h6" 
+              noWrap 
+              component="div" 
+              sx={{ 
+                fontWeight: 700,
+                fontSize: '1rem',
+                color: '#1a1a1a',
+              }}
+            >
+              TrackSamples
+            </Typography>
+          </Box>
         </Toolbar>
       </AppBar>
 
@@ -279,6 +519,8 @@ const Layout = ({ children }) => {
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: DRAWER_WIDTH,
+              borderRight: 'none',
+              boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
             },
           }}
         >
@@ -293,8 +535,8 @@ const Layout = ({ children }) => {
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: DRAWER_WIDTH,
-              borderRight: '1px solid',
-              borderColor: 'divider',
+              borderRight: `1px solid ${alpha(COLORS.primary, 0.08)}`,
+              boxShadow: '4px 0 24px rgba(0,0,0,0.04)',
             },
           }}
           open
@@ -311,7 +553,7 @@ const Layout = ({ children }) => {
           p: 3,
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
           mt: '64px',
-          bgcolor: 'background.default',
+          bgcolor: '#f5f5f5',
           minHeight: 'calc(100vh - 64px)',
         }}
       >

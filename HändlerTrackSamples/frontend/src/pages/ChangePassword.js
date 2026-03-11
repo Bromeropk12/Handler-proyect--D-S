@@ -15,7 +15,9 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  alpha,
 } from '@mui/material';
+import { keyframes } from '@mui/system';
 import {
   Visibility,
   VisibilityOff,
@@ -27,6 +29,36 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+
+// Animaciones
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+`;
+
+const float = keyframes`
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+`;
+
+// Colores de marca
+const COLORS = {
+  primary: '#7b1fa2',
+  primaryLight: '#9c27b0',
+  success: '#388e3c',
+  error: '#d32f2f',
+  warning: '#f57c00',
+};
 
 const ChangePassword = () => {
   const navigate = useNavigate();
@@ -123,14 +155,40 @@ const ChangePassword = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          bgcolor: 'background.default',
+          bgcolor: '#f5f5f5',
           p: 2,
+          background: `radial-gradient(circle at center, ${alpha(COLORS.success, 0.05)} 0%, transparent 70%)`,
         }}
       >
-        <Card sx={{ maxWidth: 450, width: '100%', textAlign: 'center' }}>
-          <CardContent sx={{ p: 4 }}>
-            <CheckCircle sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
-            <Typography variant="h5" gutterBottom>
+        <Card 
+          sx={{ 
+            maxWidth: 450, 
+            width: '100%', 
+            textAlign: 'center',
+            borderRadius: 4,
+            animation: `${fadeIn} 0.5s ease`,
+            border: `1px solid ${alpha(COLORS.success, 0.2)}`,
+            boxShadow: `0 20px 60px ${alpha(COLORS.success, 0.15)}`,
+          }}
+        >
+          <CardContent sx={{ p: 5 }}>
+            <Box
+              sx={{
+                width: 100,
+                height: 100,
+                borderRadius: '50%',
+                bgcolor: alpha(COLORS.success, 0.1),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 3,
+                animation: `${float} 2s ease-in-out infinite`,
+              }}
+            >
+              <CheckCircle sx={{ fontSize: 60, color: COLORS.success }} />
+            </Box>
+            <Typography variant="h5" gutterBottom sx={{ fontWeight: 700, color: '#1a1a1a' }}>
               ¡Contraseña actualizada!
             </Typography>
             <Typography color="text.secondary">
@@ -149,20 +207,53 @@ const ChangePassword = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: 'background.default',
+        bgcolor: '#f5f5f5',
         p: 2,
+        background: `radial-gradient(circle at top right, ${alpha(COLORS.primary, 0.05)} 0%, transparent 50%), radial-gradient(circle at bottom left, ${alpha(COLORS.primary, 0.03)} 0%, transparent 50%)`,
       }}
     >
-      <Card sx={{ maxWidth: 500, width: '100%' }}>
+      <Card 
+        sx={{ 
+          maxWidth: 520, 
+          width: '100%',
+          borderRadius: 4,
+          border: `1px solid ${alpha(COLORS.primary, 0.1)}`,
+          boxShadow: '0 20px 60px rgba(0,0,0,0.08)',
+          animation: `${fadeIn} 0.4s ease`,
+          overflow: 'hidden',
+        }}
+      >
+        {/* Barra superior de color */}
+        <Box
+          sx={{
+            height: 6,
+            background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.primaryLight})`,
+          }}
+        />
+        
         <CardContent sx={{ p: 4 }}>
           {/* Encabezado */}
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-            <IconButton onClick={() => navigate('/')} sx={{ mr: 1 }}>
+            <IconButton 
+              onClick={() => navigate('/')} 
+              sx={{ 
+                mr: 1,
+                bgcolor: alpha(COLORS.primary, 0.08),
+                '&:hover': {
+                  bgcolor: alpha(COLORS.primary, 0.15),
+                }
+              }}
+            >
               <ArrowBack />
             </IconButton>
-            <Typography variant="h5" component="h1">
-              Cambiar Contraseña
-            </Typography>
+            <Box>
+              <Typography variant="h5" component="h1" sx={{ fontWeight: 700, color: '#1a1a1a' }}>
+                Cambiar Contraseña
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Actualiza tu credencial de acceso
+              </Typography>
+            </Box>
           </Box>
 
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
@@ -170,7 +261,14 @@ const ChangePassword = () => {
           </Typography>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
+            <Alert 
+              severity="error" 
+              sx={{ 
+                mb: 3,
+                borderRadius: 2,
+                border: `1px solid ${alpha(COLORS.error, 0.2)}`,
+              }}
+            >
               {error}
             </Alert>
           )}
@@ -184,11 +282,11 @@ const ChangePassword = () => {
               value={formData.currentPassword}
               onChange={handleChange('currentPassword')}
               required
-              sx={{ mb: 2 }}
+              sx={{ mb: 2.5 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Lock />
+                    <Lock sx={{ color: COLORS.primary }} />
                   </InputAdornment>
                 ),
                 endAdornment: (
@@ -202,7 +300,15 @@ const ChangePassword = () => {
             />
 
             <Divider sx={{ my: 3 }}>
-              <Typography variant="caption" color="text.secondary">
+              <Typography 
+                variant="caption" 
+                color="text.secondary"
+                sx={{ 
+                  px: 1,
+                  fontWeight: 600,
+                  letterSpacing: '0.5px',
+                }}
+              >
                 NUEVA CONTRASEÑA
               </Typography>
             </Divider>
@@ -215,11 +321,11 @@ const ChangePassword = () => {
               value={formData.newPassword}
               onChange={handleChange('newPassword')}
               required
-              sx={{ mb: 1 }}
+              sx={{ mb: 1.5 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <LockOpen />
+                    <LockOpen sx={{ color: COLORS.primary }} />
                   </InputAdornment>
                 ),
                 endAdornment: (
@@ -239,7 +345,14 @@ const ChangePassword = () => {
                   <Typography variant="caption" color="text.secondary">
                     Fortaleza:
                   </Typography>
-                  <Typography variant="caption" color={`${getStrengthColor()}.main`}>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      fontWeight: 600,
+                      color: getStrengthColor() === 'success' ? COLORS.success : 
+                             getStrengthColor() === 'warning' ? COLORS.warning : COLORS.error,
+                    }}
+                  >
                     {getStrengthLabel()}
                   </Typography>
                 </Box>
@@ -247,28 +360,41 @@ const ChangePassword = () => {
                   variant="determinate"
                   value={getPasswordStrength()}
                   color={getStrengthColor()}
-                  sx={{ height: 6, borderRadius: 3 }}
+                  sx={{ 
+                    height: 8, 
+                    borderRadius: 4,
+                    bgcolor: alpha(COLORS.primary, 0.1),
+                  }}
                 />
               </Box>
             )}
 
             {/* Requisitos de contraseña */}
             {formData.newPassword && (
-              <List dense sx={{ mb: 2 }}>
+              <List dense sx={{ mb: 2.5, bgcolor: alpha(COLORS.primary, 0.02), borderRadius: 2, p: 1 }}>
                 {passwordRequirements.map((req, index) => (
-                  <ListItem key={index} sx={{ py: 0 }}>
-                    <ListItemIcon sx={{ minWidth: 30 }}>
+                  <ListItem key={index} sx={{ py: 0.25 }}>
+                    <ListItemIcon sx={{ minWidth: 32 }}>
                       {req.valid ? (
-                        <CheckCircle fontSize="small" color="success" />
+                        <CheckCircle 
+                          fontSize="small" 
+                          sx={{ color: COLORS.success }} 
+                        />
                       ) : (
-                        <Cancel fontSize="small" color="error" />
+                        <Cancel 
+                          fontSize="small" 
+                          sx={{ color: alpha('#999', 0.5) }} 
+                        />
                       )}
                     </ListItemIcon>
                     <ListItemText
                       primary={req.label}
                       primaryTypographyProps={{
                         variant: 'body2',
-                        color: req.valid ? 'success.main' : 'text.secondary',
+                        sx: {
+                          color: req.valid ? COLORS.success : 'text.secondary',
+                          fontWeight: req.valid ? 500 : 400,
+                        },
                       }}
                     />
                   </ListItem>
@@ -289,14 +415,14 @@ const ChangePassword = () => {
                 formData.confirmPassword && !passwordsMatch
                   ? 'Las contraseñas no coinciden'
                   : passwordsMatch
-                  ? 'Las contraseñas coinciden'
+                  ? '✓ Las contraseñas coinciden'
                   : ''
               }
               sx={{ mb: 3 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <LockOpen />
+                    <LockOpen sx={{ color: passwordsMatch ? COLORS.success : COLORS.primary }} />
                   </InputAdornment>
                 ),
                 endAdornment: (
@@ -321,13 +447,29 @@ const ChangePassword = () => {
                 fontWeight: 600,
                 textTransform: 'none',
                 fontSize: '1rem',
+                borderRadius: 2.5,
+                boxShadow: `0 8px 24px ${alpha(COLORS.primary, 0.3)}`,
+                '&:hover': {
+                  boxShadow: `0 12px 32px ${alpha(COLORS.primary, 0.4)}`,
+                },
+                '&:disabled': {
+                  boxShadow: 'none',
+                }
               }}
             >
               {loading ? 'Cambiando...' : 'Confirmar Cambio de Contraseña'}
             </Button>
 
             {/* Información de seguridad */}
-            <Alert severity="info" sx={{ mt: 3 }}>
+            <Alert 
+              severity="info" 
+              sx={{ 
+                mt: 3,
+                borderRadius: 2,
+                border: `1px solid ${alpha(COLORS.primary, 0.1)}`,
+                bgcolor: alpha(COLORS.primary, 0.03),
+              }}
+            >
               <Typography variant="body2">
                 <strong>Nota de seguridad:</strong> Tu contraseña se encriptará usando bcrypt.
                 Asegúrate de usar una contraseña única que no uses en otros servicios.
