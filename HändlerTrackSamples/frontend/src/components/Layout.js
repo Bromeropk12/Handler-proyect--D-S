@@ -24,13 +24,15 @@ import {
   VpnKey as PasswordIcon,
   ExitToApp,
   PhotoCamera,
+  Home,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
 const DRAWER_WIDTH = 260;
 
-// Menú simplificado - solo cambio de contraseña
+// Menú del sidebar
 const menuItems = [
+  { text: 'Home', icon: <Home />, path: '/' },
   { text: 'Cambiar Contraseña', icon: <PasswordIcon />, path: '/change-password' },
 ];
 
@@ -94,15 +96,29 @@ const Layout = ({ children }) => {
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Logo */}
-      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}>
-          H
-        </Avatar>
+      <Box 
+        sx={{ 
+          p: 2, 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 2,
+          cursor: 'pointer',
+          '&:hover': { bgcolor: 'action.hover' }
+        }}
+        onClick={() => navigate('/')}
+      >
+        <Box
+          component="img"
+          src="/Logo-Handler.png"
+          alt="Händler Logo"
+          sx={{ width: 45, height: 45, objectFit: 'contain' }}
+          onError={(e) => { e.target.style.display = 'none'; }}
+        />
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
             Händler
           </Typography>
-          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', lineHeight: 1.2 }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', lineHeight: 1.2, fontSize: '0.7rem' }}>
             TrackSamples
           </Typography>
         </Box>
