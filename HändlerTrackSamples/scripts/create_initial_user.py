@@ -6,6 +6,7 @@ import os
 import sys
 import secrets
 import string
+from datetime import datetime
 
 # Agregar el directorio backend al path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'backend'))
@@ -85,6 +86,5 @@ def create_initial_user():
         db.close()
 
 if __name__ == "__main__":
-    from datetime import datetime
     success = create_initial_user()
     sys.exit(0 if success else 1)

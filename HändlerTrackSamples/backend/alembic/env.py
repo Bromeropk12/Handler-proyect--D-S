@@ -16,9 +16,6 @@ from alembic import context
 # Import your models' Base
 from database.database import Base
 from models.user import User
-from models.sample import Sample
-from models.movement import Movement
-from models.chemical_compatibility import ChemicalCompatibility
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

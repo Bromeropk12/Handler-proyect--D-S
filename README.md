@@ -4,16 +4,33 @@
 
 Aplicación de escritorio para la gestión y localización de muestras de materias primas en **Handler S.A.S.** Desarrollada como sistema paralelo a SAP-ERP para optimizar la gestión de inventario de muestras físicas en bodega.
 
-## Características Principales
+## Estado del Proyecto
 
-- **Gestión de Catálogo**: Registro, edición y visualización completa de muestras
-- **Localización Física**: Sistema de codificación `[ZONA]-[ESTANTE]-[NIVEL]-[POSICIÓN]`
-- **Compatibilidad Química**: Alertas automáticas de incompatibilidades entre sustancias
-- **Mapa Visual**: Representación gráfica de la bodega con iluminación de ubicaciones
-- **Documentación**: Generación de etiquetas y visualización de Certificados de Análisis (CoA)
-- **Búsqueda**: Filtrado en tiempo real por referencia, lote o proveedor
-- **Carga Masiva**: Importación de muestras desde archivo Excel
-- **Backups Automáticos**: Sistema de respaldo local y en la nube
+**Versión: 1.0 - EN DESARROLLO**
+
+### Funcionalidades Implementadas ✅
+
+| Módulo | Estado | Descripción |
+|--------|--------|-------------|
+| Autenticación JWT | ✅ Completo | Login seguro con tokens JWT |
+| Gestión de Usuarios | ✅ Completo | CRUD de usuarios con roles |
+| Cambio de Contraseña | ✅ Completo | Sistema de recuperación |
+| Backend FastAPI | ✅ Operativo | API REST con documentación |
+| Base de Datos MySQL | ✅ Configurada | Con migraciones Alembic |
+| Frontend Electron+React | ✅ Estructura base | UI con Material-UI |
+| Script de Backup | ✅ Operativo | PowerShell para backups |
+
+### Funcionalidades Pendientes ❌
+
+| Módulo | Estado | Descripción |
+|--------|--------|-------------|
+| Gestión de Muestras | ❌ Pendiente | CRUD completo de muestras |
+| Localización Física | ❌ Pendiente | Sistema [ZONA]-[ESTANTE]-[NIVEL]-[POSICIÓN] |
+| Compatibilidad Química | ❌ Pendiente | Alertas de incompatibilidades |
+| Mapa Visual | ❌ Pendiente | Representación gráfica de bodega |
+| Etiquetas y CoA | ❌ Pendiente | Generación de etiquetas |
+| Importación Excel | ❌ Pendiente | Carga masiva de datos |
+| Reportes | ❌ Pendiente | Exportación de informes |
 
 ## Tecnologías
 
@@ -26,7 +43,7 @@ Aplicación de escritorio para la gestión y localización de muestras de materi
 - **Bcrypt**: Encriptación de contraseñas
 
 ### Frontend
-- **Electron v30**: Aplicación de escritorio nativa Windows
+- **Electron v33**: Aplicación de escritorio nativa Windows
 - **React 18**: Framework de interfaz de usuario
 - **Material-UI (MUI) v5**: Componentes profesionales
 - **Fluent Design**: Estilo Windows 11
@@ -48,81 +65,53 @@ git clone <repository-url>
 cd HändlerTrackSamples
 ```
 
-### 2. Instalar Dependencias del Backend
+### 2. Crear y activar entorno virtual
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+### 3. Instalar Dependencias del Backend
 ```bash
 cd backend
 pip install -r requirements.txt
 ```
 
-### 3. Configurar Base de Datos
-```bash
-# Editar archivo .env con credenciales de MySQL
-notepad ..env
+### 4. Configurar Base de Datos
+Crear archivo `.env` en la raíz del proyecto:
+```env
+DATABASE_URL=mysql+pymysql://root:password@localhost:3306/handler_tracksamples
+SECRET_KEY=tu_secret_key_aqui
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+CORS_ORIGINS=http://localhost:3000
 ```
 
-### 4. Iniciar Servidor Backend
+### 5. Inicializar Base de Datos
+```bash
+cd ..\scripts
+python database_init.py
+python create_initial_user.py
+```
+
+### 6. Iniciar Servidor Backend
 ```bash
 cd backend
-python -m uvicorn main:app --reload
+python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
 
 # API disponible en http://localhost:8000
 # Documentación: http://localhost:8000/docs
 ```
 
-### 5. Instalar Dependencias del Frontend
+### 7. Instalar Dependencias del Frontend
 ```bash
 cd frontend
 npm install
 ```
 
-### 6. Ejecutar Aplicación
+### 8. Ejecutar Aplicación
 ```bash
 # Modo desarrollo
 npm run dev
-
-# O como aplicación Electron
-npm run electron
-```
-
-## Uso
-
-### Autenticación
-```bash
-# Login
-curl -X POST "http://localhost:8000/login/" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=admin&password=password123"
-```
-
-### Gestión de Muestras
-```bash
-# Crear muestra
-curl -X POST "http://localhost:8000/samples/" \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "reference_code": "REF001",
-    "description": "Ácido Hialurónico",
-    "chemical_composition": "C14H22O11",
-    "supplier": "Proveedor A",
-    "batch_number": "BATCH001",
-    "quantity": 100.0,
-    "unit": "kg",
-    "zone": "COS",
-    "shelf": "E3",
-    "level": "N2",
-    "position": "P05",
-    "business_line": "Cosmetica",
-    "status": "available"
-  }'
-```
-
-### Importación Masiva
-```bash
-# Importar desde Excel
-curl -X POST "http://localhost:8000/samples/import-excel" \
-  -H "Authorization: Bearer <token>" \
-  -F "file=@plantilla_importacion.xlsx"
 ```
 
 ## Estructura del Proyecto
@@ -131,103 +120,44 @@ curl -X POST "http://localhost:8000/samples/import-excel" \
 HändlerTrackSamples/
 ├── backend/                 # API REST FastAPI
 │   ├── main.py             # Aplicación principal
-│   ├── models/             # Modelos SQLAlchemy
-│   ├── schemas/            # Schemas Pydantic
+│   ├── models/              # Modelos SQLAlchemy
+│   │   └── user.py         # ✓ Implementado
+│   ├── schemas/             # Schemas Pydantic
+│   │   └── __init__.py     # ✓ Implementado
 │   ├── security/           # Autenticación JWT
+│   │   └── __init__.py     # ✓ Implementado
 │   ├── database/           # Conexión MySQL
+│   │   └── database.py     # ✓ Implementado
+│   ├── alembic/            # Migraciones
 │   └── scripts/            # Utilidades y backups
 ├── frontend/               # Aplicación Electron
 │   ├── src/
 │   │   ├── pages/          # Páginas React
+│   │   │   ├── Login.js           # ✓ Implementado
+│   │   │   ├── Welcome.js         # ✓ Implementado
+│   │   │   └── ChangePassword.js  # ✓ Implementado
 │   │   ├── components/     # Componentes UI
 │   │   ├── context/        # Contextos React
+│   │   │   └── AuthContext.js     # ✓ Implementado
 │   │   ├── services/       # Servicios API
+│   │   │   └── api.js              # ✓ Implementado
 │   │   └── constants/      # Tema y estilos
 │   └── package.json
 ├── scripts/                # Scripts de instalación
-├── .env                    # Variables de entorno
+│   ├── database_init.py    # ✓ Corregido
+│   └── create_initial_user.py  # ✓ Corregido
 └── README.md
-```
-
-## Sistema de Localización
-
-### Codificación de Ubicación
-Cada muestra tiene un código único de 4 partes:
-```
-[ZONA]-[ESTANTE]-[NIVEL]-[POSICIÓN]
-Ejemplo: COS-E3-N2-P05
-```
-
-### Zonas por Línea de Negocio
-| Código | Línea | Color |
-|--------|-------|-------|
-| COS | Cosmética | 🔴 Morado |
-| IND | Industrial | 🔵 Azul |
-| FAR | Farmacológica | 🟢 Verde |
-
-### Mapa Visual
-- Panel derecho muestra esquema gráfico de estantería
-- Al seleccionar una muestra, se ilumina la celda exacta
-- Colores corporativos identifican cada zona
-
-## Backup y Recuperación
-
-### Backup Automático
-El sistema realiza backups automáticos diarios:
-1. **Backup Local**: Archivos en `C:\HandlerBackups\`
-2. **Retención**: 30 días de backups
-3. **Nube**: OneDrive, Google Drive o AWS S3
-
-### Ejecutar Backup Manual
-```powershell
-cd backend/scripts
-.\backup_handler.ps1
-```
-
-### Programar Backup Automático
-```powershell
-# Abrir Task Scheduler
-taskschd.msc
-
-# Crear tarea programada para ejecutar:
-powershell.exe -ExecutionPolicy Bypass -File "C:\HandlerTrackSamples\backend\scripts\backup_handler.ps1"
 ```
 
 ## Desarrollo
 
-### Pre-requisitos
-- Python 3.9+
-- Node.js 18+
-- MySQL 8.0+
-- Git
+### Rutas Protegidas
+El sistema cuenta con autenticación JWT. Todas las rutas excepto `/login/` requieren token de acceso.
 
-### Configuración de Desarrollo
-1. Clonar el repositorio
-2. Crear entorno virtual Python
-   ```bash
-   python -m venv venv
-   venv\Scripts\activate
-   ```
-3. Instalar dependencias
-   ```bash   pip install -r requirements.txt
-   ```
-4. Configurar `.env` con credenciales MySQL
-5. Iniciar servidor
-   ```bash
-   python -m uvicorn main:app --reload
-   ```
-
-## Testing
-
-### Testing del Backend
+### Ejecutar en desarrollo
 ```bash
-cd backend
-pytest -v
-```
-
-### Testing con Cobertura
-```bash
-pytest --cov=backend --cov-report=html
+# Iniciar todo (Backend + Frontend)
+.\start_all.bat
 ```
 
 ## Seguridad
@@ -242,6 +172,16 @@ pytest --cov=backend --cov-report=html
 - Protección contra inyección SQL
 - Conexión segura a MySQL
 
+## Próximos Pasos
+
+Para continuar el desarrollo:
+1. Implementar modelos de datos (Sample, Movement, ChemicalCompatibility)
+2. Crear schemas Pydantic correspondientes
+3. Implementar endpoints REST para muestras
+4. Desarrollar frontend para gestión de muestras
+5. Implementar sistema de localización física
+6. Agregar compatibilidad química
+
 ## Soporte
 
 ### Contacto
@@ -252,4 +192,4 @@ pytest --cov=backend --cov-report=html
 
 **Handler S.A.S.** - Distribuidor líder de materias primas para industrias farmacéutica, cosmética e industrial
 
-*Versión: 1.0 - Estado: EN PRODUCCIÓN (90%)*
+*Versión: 1.0 - Estado: EN DESARROLLO*

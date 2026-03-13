@@ -59,12 +59,9 @@ def init_db():
         print(f"\nConectando a la base de datos '{db_name}'...")
         engine = create_engine(DATABASE_URL)
         
-        # Importar todos los modelos
+        # Importar modelos existentes
         print("\nImportando modelos...")
-        from models.sample import Sample
         from models.user import User
-        from models.movement import Movement
-        from models.chemical_compatibility import ChemicalCompatibility
         from database.database import Base
         
         # Crear tablas
