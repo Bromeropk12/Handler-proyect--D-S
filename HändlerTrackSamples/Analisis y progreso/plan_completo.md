@@ -1,182 +1,125 @@
-# Plan Completo - Händler TrackSamples
+# Plan Completo Actualizado - Händler TrackSamples (WMS Inteligente)
 
 ## Resumen Ejecutivo
 
-Este documento presenta el plan completo para el desarrollo del software Händler TrackSamples, una aplicación de escritorio diseñada para optimizar la gestión, control y localización física del inventario de muestras de materias primas en Handler S.A.S.
+Este documento presenta el plan estratégico e ingenieril para el desarrollo del software **Händler TrackSamples**, una aplicación de escritorio avanzada (WMS - Warehouse Management System) diseñada para optimizar la gestión, control estricto y localización física del inventario de muestras químicas en **Handler S.A.S.** El sistema destaca por su motor lógico enfocado en la prevención de riesgos mediante compatibilidad química automatizada.
 
-## 1. Arquitectura y Tecnologías Recomendadas
+## 1. Arquitectura y Tecnologías Implementadas
 
-### Backend
-- **Python** con framework **FastAPI** (rendimiento, async, moderno)
-- **MySQL** como base de datos relacional
-- **Pydantic** para validación de datos
-- **SQLAlchemy** como ORM
+### Backend (El "Cerebro")
+- **Python** con framework **FastAPI** (rendimiento, asincronismo y validaciones integradas)
+- **MySQL** como base de datos relacional para garantizar la integridad referencial (ACID)
+- **SQLAlchemy** (ORM) y **Alembic** para la gestión de migraciones
+- **Pydantic** para esquemas y validación estricta de datos
 
-### Frontend
-- **Electron** para aplicación de escritorio nativa
-- **React** o **Vue.js** para interfaz
-- **Tailwind CSS** para diseño responsive
+### Frontend (La Interfaz Visual)
+- **Electron** para la envoltura como aplicación de escritorio nativa (Windows)
+- **React.js** como librería principal para la construcción de interfaces modulares
+- **Material UI** (MUI) para componentes visuales estandarizados y accesibles
 
-### Seguridad
-- Encriptación de datos sensibles
-- Autenticación local con credenciales
-- Control de acceso por usuario
+### Seguridad y Lógica de Negocio
+- Autenticación mediante **JWT** (JSON Web Tokens) y cifrado **bcrypt**
+- Motor de reglas basado en el Sistema Globalmente Armonizado (SGA/GHS)
 
-## 2. Estrategia de Backup Automático
+## 2. Estrategia de Almacenamiento Físico y Lógico
 
-### Backup Local
-- Scripts programados con **Windows Task Scheduler**
-- Backup incremental cada 24 horas
-- Retención de 30 días de backups
+El núcleo innovador del sistema radica en su modelo dual de estructuración:
 
-### Backup en la Nube
-- **AWS S3** o **Google Cloud Storage** para redundancia
-- Encriptación de datos en tránsito y reposo
-- Verificación de integridad con checksums
+### Gestión por Anaqueles Dedicados
+- Separación física por líneas de negocio (Cosmética, Farmacéutica, Industrial) para evitar contaminación cruzada
 
-### Estrategia de Almacenamiento
-- Servidor local de la empresa como repositorio principal
-- Nube como backup secundario
-- Cintas magnéticas o discos externos para backup a largo plazo
+### Sistema de Coordenadas por Hileras (Carriles)
+- Cada nivel del anaquel (10 niveles) se divide en 13 hileras (eje X) con una profundidad de 9 posiciones (eje Z)
+- Las muestras idénticas se apilan en la misma hilera, reduciendo la complejidad de cálculo espacial
 
-## 3. Estructura del Proyecto
+### Regla de la Gravedad
+- Líquidos forzados a niveles inferiores (1-4)
+- Sólidos a niveles superiores (5-10) para mitigar riesgos por derrames
 
-```
-HändlerTrackSamples/
-├── backend/
-│   ├── models/
-│   ├── controllers/
-│   ├── services/
-│   ├── database/
-│   └── main.py
-├── frontend/
-│   ├── components/
-│   ├── pages/
-│   ├── assets/
-│   └── main.js
-├── database/
-│   ├── migrations/
-│   └── schema.sql
-├── scripts/
-│   ├── backup/
-│   ├── restore/
-│   └── maintenance/
-└── docs/
-    ├── manual_usuario/
-    └── api/
-```
+## 3. Funcionalidades Principales (Core Features)
 
-## 4. Funcionalidades Principales
+### Módulo de Catálogo e Inventario
+- **CRUD de muestras** químicas con clasificación obligatoria por Clase de Peligro
+- Control de volumen y unidades (ml, L, g, kg)
+- Importación masiva desde Excel para carga inicial
 
-### Gestión de Catálogo
-- **CRUD de muestras** con validación
-- **Importación desde Excel**
-- **Búsqueda y filtrado en tiempo real**
+### Motor Inteligente de Localización y Seguridad
+- **Matriz de Compatibilidad Química Automática**: El sistema evalúa a los vecinos adyacentes (izquierda/derecha) antes de sugerir una ubicación
+- **Algoritmo de Reubicación Mínima (Swap)**: En escenarios de alta ocupación y conflicto químico, el sistema utiliza muestras "Inertes" como buffer para sugerir intercambios de un solo movimiento, evitando reorganizaciones masivas
+- **Mapa Visual Interactivo 2D**: Interfaz tipo cuadrícula/barras que ilumina la ubicación exacta de la muestra solicitada
 
-### Localización Física
-- **Sistema de codificación** [ZONA]-[ESTANTE]-[NIVEL]-[POSICIÓN]
-- **Mapa visual interactivo**
-- **Alertas de compatibilidad química**
+### Trazabilidad y Documentación
+- Registro de Movimientos (Entradas y Salidas) en tiempo real
+- Generador de Códigos QR para vinculación física-digital
+- Gestión y visualización de Certificados de Análisis (CoA) en PDF
 
-### Documentación
-- **Generación automática de etiquetas**
-- **Visualización de CoA (Certificados de Análisis)**
-- **Exportación de reportes**
+## 4. Plan de Implementación (6 Sprints)
 
-## 5. Plan de Implementación (6 Sprints)
+El desarrollo se divide en 6 Sprints de 2 semanas cada uno, siguiendo una arquitectura incremental donde las reglas de negocio preceden a la interfaz visual compleja.
 
-### Sprint 1 (2 semanas): Configuración y modelo de datos
-- Base de datos MySQL
-- Modelos de datos
-- Autenticación básica
+### Sprint 1: Fundamentos, Autenticación y Catálogo Base
+- [x] Configuración del entorno (Electron + React + FastAPI)
+- [x] Implementación de JWT, roles y gestión de usuarios
+- [ ] Módulo 1: Creación del modelo Sample y esquemas Pydantic
+- [ ] CRUD básico de muestras (sin ubicación aún)
+- [ ] Frontend: Layout principal, menú lateral (Sidebar) y vistas del Catálogo
 
-### Sprint 2 (2 semanas): Catálogo y búsqueda
-- CRUD de muestras
-- Búsqueda en tiempo real
-- Importación Excel
+### Sprint 2: El Cerebro Lógico (Matriz y Hileras)
+- [ ] Creación de modelos de ClasePeligro y MatrizCompatibilidad
+- [ ] Script de siembra (Seed) con las 6 clases universales y las 36 reglas de interacción
+- [ ] Creación del modelo Hilera (130 carriles por anaquel)
+- [ ] Frontend: Integración de las clases de peligro en los formularios de registro
 
-### Sprint 3 (2 semanas): Localización visual
-- Mapa de estantería
-- Sistema de codificación
-- Alertas de compatibilidad
+### Sprint 3: Algoritmo de Asignación y Mapa Visual 2D
+- [ ] Desarrollo del location_engine.py en el backend (El motor de filtros: Línea -> Estado Físico -> Vecinos -> Compatibilidad)
+- [ ] Implementación del Algoritmo de Reubicación Mínima para el manejo de anaqueles fragmentados
+- [ ] Frontend: Desarrollo del componente WarehouseMap.jsx (Vista de niveles e hileras interactivas)
 
-### Sprint 4 (2 semanas): Documentación
-- Generador de etiquetas
-- Visualizador de CoA
-- Exportación de reportes
+### Sprint 4: Movimientos Logísticos (IN/OUT) e Importación
+- [ ] Modelado y endpoints para la tabla de Movimientos (Historial de transacciones)
+- [ ] Lógica de suma/resta en la capacidad de las Hileras (1 a 9)
+- [ ] Desarrollo del módulo de carga masiva de inventario inicial vía .xlsx (Excel)
+- [ ] Frontend: Pantalla de Operaciones Rápidas (Escanear -> Sugerir ubicación -> Confirmar)
 
-### Sprint 5 (2 semanas): Seguridad y backups
-- Sistema de backups automáticos
-- Encriptación de datos
-- Control de acceso
+### Sprint 5: Trazabilidad, QRs y Documentos (CoA)
+- [ ] Endpoint y generador visual para Etiquetas QR
+- [ ] Integración de sistema de almacenamiento local para archivos PDF (Certificados de Análisis)
+- [ ] Visualizador de PDF integrado en el frontend
+- [ ] Exportación de reportes de inventario (Excel/PDF)
 
-### Sprint 6 (2 semanas): Optimización y testing
-- Pruebas de rendimiento
-- Documentación final
-- Despliegue
+### Sprint 6: Estabilización, Backups y Despliegue
+- [ ] Implementación de scripts programados para Backups de la base de datos MySQL (Local y Nube)
+- [ ] Auditoría final de seguridad y depuración de código
+- [ ] Elaboración del manual de usuario técnico y operativo
+- [ ] Pruebas de estrés y compilación final del ejecutable de Electron (.exe)
 
-## 6. Buenas Prácticas Implementadas
+## 5. Indicadores de Éxito (KPIs)
 
-- **Control de versiones** con Git
-- **Testing automatizado** con pytest
-- **Documentación** con Swagger/OpenAPI
-- **Logging** estructurado
-- **Manejo de errores** robusto
+| Indicador | Meta |
+|-----------|------|
+| Precisión Logística | 100% de coincidencia entre el mapa digital y el anaquel físico |
+| Seguridad Laboral | 0% de asignaciones automáticas que infrinjan la matriz SGA/GHS |
+| Eficiencia Operativa | Reducción del tiempo de búsqueda y almacenamiento a menos de 15 segundos |
+| Disponibilidad y Respaldo | Ejecución exitosa de copias de seguridad cada 24 horas sin corrupción de datos |
 
-## 7. Requerimientos Técnicos
+## 6. Riesgos y Mitigaciones
 
-### Hardware
-- Windows 10/11 Pro
-- 8GB RAM mínimo
-- 500GB disco duro
-- Impresora local compatible
+| Riesgo | Probabilidad | Impacto | Estrategia de Mitigación |
+|--------|--------------|---------|---------------------------|
+| Fragmentación extrema de espacio | Alta | Medio | Algoritmo de "Reubicación Mínima" usando muestras inertes |
+| Incompatibilidad Química / Error Humano | Baja | Crítico | Validación estricta en Backend + Alerta visual bloqueante en Frontend |
+| Fallo del hardware local | Media | Alto | Estrategia de backups automatizados (Local + Cloud) |
+| Resistencia al cambio del personal | Media | Medio | Interfaz visual altamente intuitiva y capacitación pre-despliegue |
 
-### Software
-- Python 3.9+
-- MySQL 8.0+
-- Node.js 18+
-- Windows 10/11
+## 7. Cronograma y Entregables Finales
 
-## 8. Preguntas para el Cliente
-
-1. ¿Qué versión específica de Windows utilizarán (10/11)?
-2. ¿Tienen preferencia por alguna tecnología específica?
-3. ¿Cuál es el volumen estimado de datos inicial?
-4. ¿Necesitan integración con SAP u otros sistemas existentes?
-5. ¿Cuál es el presupuesto aproximado para desarrollo y mantenimiento?
-
-## 9. Indicadores de Éxito
-
-- **Reducción de tiempo de búsqueda**: 80% menor que proceso manual
-- **Precisión de localización**: 100% con sistema de codificación
-- **Disponibilidad del sistema**: 99.9% con backups automáticos
-- **Satisfacción del usuario**: 90%+ en encuestas post-implementación
-
-## 10. Riesgos y Mitigaciones
-
-| Riesgo | Probabilidad | Impacto | Mitigación |
-|--------|--------------|---------|------------|
-| Fallo de servidor local | Media | Alto | Backups en la nube y local |
-| Incompatibilidad química | Baja | Crítico | Sistema de alertas automático |
-| Error humano en datos | Alta | Medio | Validaciones y auditoría |
-| Problemas de impresión | Media | Bajo | Soporte múltiple de impresoras |
-
-## 11. Entregables del Proyecto
-
-- **Aplicación de escritorio funcional** desplegada en entorno local
-- **Manual de usuario** y guía de procedimientos
-- **Plantilla de etiquetas** y ejemplo de impresión
-- **Base de datos inicial** cargada con catálogo
-- **Documentación técnica** completa
-- **Scripts de backup** y mantenimiento
-
-## 12. Cronograma Total
-
-- **Duración total**: 12 semanas (6 sprints)
-- **Inicio**: Inmediato tras aprobación del plan
-- **Entrega final**: Semana 12 con despliegue completo
-- **Soporte post-implementación**: 3 meses incluidos
+- **Duración Total**: 12 Semanas (6 Sprints)
+- **Entregables**:
+  - Archivo instalable .exe de la aplicación de escritorio Händler TrackSamples
+  - Base de datos estructurada con las reglas de negocio (SGA)
+  - Manual Operativo y Técnico de la plataforma
+  - Scripts de recuperación y respaldo de base de datos
 
 ---
 
-*Este plan ha sido elaborado considerando todos los requisitos especificados en el documento de especificación y las mejores prácticas de desarrollo de software. Está diseñado para ser escalable, mantenible y robusto, garantizando la integridad de los datos y la continuidad operativa de Handler S.A.S.*
+*Este plan está diseñado bajo estándares profesionales de Ingeniería de Software, garantizando escalabilidad, cumplimiento normativo de seguridad de laboratorios y una experiencia de usuario altamente eficiente.*
