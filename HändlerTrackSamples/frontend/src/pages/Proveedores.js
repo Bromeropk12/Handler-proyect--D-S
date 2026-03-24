@@ -9,12 +9,11 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Grid,
   InputAdornment, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, TablePagination, Snackbar, Alert, CircularProgress,
-  Switch, FormControlLabel, FormControl, InputLabel, Select, OutlinedInput
+  Switch, FormControlLabel, Autocomplete
 } from '@mui/material';
 import {
   Add as AddIcon, Search as SearchIcon, Edit as EditIcon,
-  Delete as DeleteIcon, Refresh as RefreshIcon, Business as BusinessIcon,
-  Cancel as CancelIcon
+  Delete as DeleteIcon, Refresh as RefreshIcon, Business as BusinessIcon
 } from '@mui/icons-material';
 import { proveedoresAPI } from '../services/api';
 
@@ -153,11 +152,6 @@ const Proveedores = () => {
   const handleInputChange = (field) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
     setProveedorActual(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleLineasNegocioChange = (event) => {
-    const value = event.target.value;
-    setProveedorActual(prev => ({ ...prev, lineas_negocio: typeof value === 'string' ? value.split(',') : value }));
   };
 
   return (
@@ -353,37 +347,33 @@ const Proveedores = () => {
               />
             </Grid>
             <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Líneas de Negocio</InputLabel>
-                <Select
-                  multiple
-                  value={proveedorActual?.lineas_negocio || []}
-                  onChange={handleLineasNegocioChange}
-                  input={<OutlinedInput label="Líneas de Negocio" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip 
-                          key={value} 
-                          label={value} 
-                          size="small" 
-                          onDelete={() => {
-                            const nuevasLineas = (proveedorActual?.lineas_negocio || []).filter(l => l !== value);
-                            setProveedorActual(prev => ({ ...prev, lineas_negocio: nuevasLineas }));
-                          }}
-                          deleteIcon={<CancelIcon />}
-                        />
-                      ))}
-                    </Box>
-                  )}
-                >
-                  {LINEAS_NEGOCIO.map((linea) => (
-                    <MenuItem key={linea.value} value={linea.value}>
-                      {linea.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <Autocomplete
+                multiple
+                options={LINEAS_NEGOCIO}
+                getOptionLabel={(option) => option.label}
+                value={(proveedorActual?.lineas_negocio || []).map(
+                  l => LINEAS_NEGOCIO.find(opt => opt.value === l) || { value: l, label: l }
+                )}
+                onChange={(event, newValue) => {
+                  setProveedorActual(prev => ({
+                    ...prev,
+                    lineas_negocio: newValue.map(v => v.value)
+                  }));
+                }}
+                renderInput={(params) => (
+                  <TextField {...params} label="Líneas de Negocio" placeholder="Seleccione líneas" />
+                )}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      label={option.label}
+                      size="small"
+                      {...getTagProps({ index })}
+                      key={option.value}
+                    />
+                  ))
+                }
+              />
             </Grid>
             {modoEdicion && (
               <Grid item xs={12}>

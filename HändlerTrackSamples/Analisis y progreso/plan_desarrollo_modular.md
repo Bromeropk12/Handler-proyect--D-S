@@ -24,6 +24,18 @@
 | Datos | Seed: Proveedores reales de Handler | ✅ Completo |
 | Datos | Seed: Clases GHS (9 clases) | ✅ Completo |
 
+### ✅ Parcialmente Implementado (Sprint 2 - EN PROGRESO)
+| Módulo | Componente | Estado |
+|--------|------------|--------|
+| Backend | Modelo: Linea | ✅ Completo |
+| Backend | Modelo: Anaquel | ✅ Completo |
+| Backend | Modelo: Hilera | ✅ Completo |
+| Backend | Modelo: AnaquelProveedor (RNF-2) | ✅ Completo |
+| Backend | Routers: lineas, anaqueles, hileras | ✅ Completo |
+| Backend | Routers: anaquel_proveedor | ✅ Completo |
+| Frontend | Almacen.js (Gestión de bodega) | ✅ Completo |
+| Datos | Seed: Línea, Anaquel, Hilera | ❌ Falta seed automático |
+
 ### ❌ Por Implementar (Sprints 3-6)
 | Módulo | Componente | Estado |
 |--------|------------|--------|
@@ -71,32 +83,36 @@ backend/
 │   ├── proveedor.py  ✅ Existe
 │   ├── clase_peligro.py  ✅ Existe
 │   ├── movement.py   📦 Nuevo
-│   ├── linea.py      📦 Nuevo
-│   ├── anaquel.py    📦 Nuevo (con relación a proveedor)
-│   ├── hilera.py     📦 Nuevo (con dimensiones 1x1, 2x1, 2x2)
-│   └── compatibilidad.py  📦 Nuevo
+│   ├── linea.py      ✅ Existe
+│   ├── anaquel.py    ✅ Existe
+│   ├── hilera.py     ✅ Existe
+│   └── anaquel_proveedor.py  ✅ Existe (RNF-2)
 ├── schemas/          # Esquemas Pydantic
-│   ├── __init__.py   ✅ Existe (ampliar)
-│   ├── sample.py     ✅ Existe
-│   ├── movement.py   📦 Nuevo
-│   └── location.py   📦 Nuevo
+│   └── __init__.py   ✅ Existe (ampliar)
 ├── routers/          # Endpoints API
 │   ├── __init__.py   ✅ Existe
 │   ├── auth.py       ✅ Existe
 │   ├── muestras.py   ✅ Existe
 │   ├── proveedores.py    ✅ Existe
 │   ├── clases_peligro.py ✅ Existe
+│   ├── lineas.py     ✅ Existe
+│   ├── anaqueles.py  ✅ Existe
+│   ├── hileras.py    ✅ Existe
+│   ├── anaquel_proveedor.py  ✅ Existe
 │   ├── movements.py  📦 Nuevo
 │   ├── location.py   📦 Nuevo
 │   └── reports.py    📦 Nuevo
 ├── services/         # Lógica de negocio (NUEVO)
-│   ├── __init__.py
-│   ├── location_engine.py
-│   ├── compatibilidad.py
-│   ├── dosificacion.py  📦 Nuevo (RNF-1)
-│   ├── reubicacion.py   📦 Nuevo (Algoritmo Swap)
-│   ├── fefo.py          📦 Nuevo (First Expire First Out)
-│   └── import_excel.py
+│   ├── __init__.py   📦 Nuevo
+│   ├── location_engine.py   📦 Nuevo
+│   ├── compatibilidad.py    📦 Nuevo
+│   ├── dosificacion.py      📦 Nuevo (RNF-1)
+│   ├── reubicacion.py       📦 Nuevo
+│   ├── fefo.py              📦 Nuevo
+│   ├── movement_service.py  📦 Nuevo
+│   ├── alertas_service.py   📦 Nuevo
+│   ├── import_excel.py      📦 Nuevo
+│   └── qr_service.py        📦 Nuevo
 └── seed/             # Datos iniciales
     ├── __init__.py   ✅ Existe
     └── sga_classes.py ✅ Existe
@@ -146,10 +162,10 @@ CRUD completo de muestras químicas con clasificación por clase de peligro y ca
   - `GET /api/clases-peligro` - Listar clases
 
 - [x] `routers/proveedores.py`:
-  - `GET /api/proveedores` - Listar proveedores
-  - `POST /api/proveedores` - Crear proveedor
-  - `PUT /api/proveedores/{id}` - Actualizar proveedor
-  - `DELETE /api/proveedores/{id}` - Eliminar proveedor
+  - `GET /proveedores` - Listar proveedores
+  - `POST /proveedores` - Crear proveedor
+  - `PUT /proveedores/{id}` - Actualizar proveedor
+  - `DELETE /proveedores/{id}` - Eliminar proveedor
 
 ### Frontend - Catálogo
 - [x] `pages/Muestras.js` - Lista de muestras con tabla, filtros y paginación
@@ -159,7 +175,6 @@ CRUD completo de muestras químicas con clasificación por clase de peligro y ca
 ### seed/ Datos Iniciales
 - [x] Insertar proveedores (BASF, THOR, JRS, JRF, SUDEEP, GIVAUDAN, MEGGLE, etc.)
 - [x] Insertar 9 clases GHS (GHS01-GHS09)
-- [ ] **RNF-2**: Tabla `anaquel_proveedor` para mapeo dinámico (Sprint 2)
 
 ### Entregable Sprint 1
 - CRUD de muestras funcional en UI
@@ -169,7 +184,7 @@ CRUD completo de muestras químicas con clasificación por clase de peligro y ca
 
 ---
 
-## Sprint 2: Estructura Física - 14 Anaqueles (Semanas 3-4) ✅ COMPLETADO
+## Sprint 2: Estructura Física - 14 Anaqueles (Semanas 3-4) ✅ PARCIAL
 
 ### Objetivo
 Definir la estructura física del almacén con **14 anaqueles** según distribución del SRS
@@ -183,13 +198,16 @@ Definir la estructura física del almacén con **14 anaqueles** según distribuc
   - id, linea_id, nombre, niveles (10), hileras (13)
   - profundidad (9 posiciones por hilera)
   - descripcion, activo
-  - **NUEVO**: relacion con proveedores (tabla anaquel_proveedor)
 
 - [x] `models/hilera.py` - Hilera (posición):
   - id, anaquel_id, nivel (1-10), hilera (1-13)
   - capacidad_max (9), posiciones_usadas
   - ancho (1-2), fondo (1-2) - dimensiones soportadas
   - estado (disponible/ocupado/mantenimiento)
+
+- [x] `models/anaquel_proveedor.py` - Relación muchos-a-muchos:
+  - id, anaquel_id, proveedor_id
+  - capacidad_max_gramos, es_principal, activo
 
 ### Configuración de 14 Anaqueles (SECCIÓN 2.1 SRS)
 ```
@@ -215,31 +233,24 @@ Farmacéutica (6):
 ```
 
 ### Backend - API
-- [ ] `routers/lineas.py` - CRUD líneas
-- [ ] `routers/anaqueles.py` - CRUD anaqueles
-- [ ] `routers/hileras.py` - CRUD hileras
+- [x] `routers/lineas.py` - CRUD líneas
+- [x] `routers/anaqueles.py` - CRUD anaqueles
+- [x] `routers/hileras.py` - CRUD hileras
   - `GET /api/hileras/disponibles?linea=&nivel=&estado=`
-
-### Backend - Services
-- [ ] `services/hilera_service.py`:
-  - get_hileras_disponibles(linea, estado_fisico, dimensiones)
-  - calcular_capacidad_por_nivel()
+- [x] `routers/anaquel_proveedor.py` - Gestión de proveedores por anaquel (RNF-2)
 
 ### Frontend
-- [ ] `pages/Lineas.jsx` - Gestión de líneas
-- [ ] `pages/Anaqueles.jsx` - Gestión de anaqueles (Dashboard 14 anaqueles)
-- [ ] `pages/Hileras.jsx` - Vista de grid de hileras
+- [x] `pages/Almacen.js` - Gestión de líneas, anaqueles y hileras
 
 ### seed/ Datos Iniciales
-- [ ] Insertar 3 líneas (Cosmética, Farmacéutica, Industrial)
-- [ ] Crear 14 anaqueles según distribución exacta
+- [x] Insertar 3 líneas (Cosmética, Farmacéutica, Industrial)
+- [ ] Crear 14 anaqueles según distribución exacta (pendiente seed automático)
 - [ ] Generar todas las hileras (14 × 10 niveles × 13 hileras = 1820 hileras)
-- [ ] Crear tabla anaquel_proveedor
 
 ### Entregable Sprint 2
-- Estructura física de 14 anaqueles configurada
+- Estructura física de 14 anaqueles (modelos creados)
 - Vista de ocupación de anaqueles
-- Mapeo proveedor-anaquel dinámico (RNF-2)
+- Mapeo proveedor-anaquel dinámico (RNF-2) ✅ IMPLEMENTADO
 
 ---
 
@@ -476,9 +487,9 @@ Características finales: QR, CoA, reportes y despliegue
 ## Resumen de Entregables por Sprint
 
 | Sprint | Módulo Principal | Entregable | Estado |
-|--------|------------------|-------------|--------|
+|--------|------------------|------------|--------|
 | 1 | Catálogo de Muestras | CRUD muestras + proveedores + clases | ✅ COMPLETADO |
-| 2 | Estructura Física | 14 Anaqueles + Hileras configurados | ❌ PENDIENTE |
+| 2 | Estructura Física | 14 Anaqueles + Hileras + anaquel_proveedor | ✅ PARCIAL |
 | 3 | Compatibilidad Química | Motor de reglas SGA | ❌ PENDIENTE |
 | 4 | Localización Inteligente | Algoritmo + Dosificación + FEFO + Mapa 2D | ❌ PENDIENTE |
 | 5 | Movimientos | Entradas/Salidas + Import Excel + Alertas | ❌ PENDIENTE |
@@ -491,7 +502,7 @@ Características finales: QR, CoA, reportes y despliegue
 | RNF | Descripción | Ubicación | Estado |
 |-----|-------------|-----------|--------|
 | RNF-1 | Integridad matemática de dosificación | Sprint 4 - dosificacion.py | ❌ PENDIENTE |
-| RNF-2 | Escalabilidad proveedores/anaqueles | Sprint 2 - tabla anaquel_proveedor | ❌ PENDIENTE |
+| RNF-2 | Escalabilidad proveedores/anaqueles | Sprint 2 - anaquel_proveedor.py | ✅ COMPLETADO |
 | RNF-3 | Interacción con sistema de archivos | Sprint 6 - coa_service.py | ❌ PENDIENTE |
 | RNF-4 | Previsualización de cuadrícula | Sprint 4 - WarehouseMap.jsx | ❌ PENDIENTE |
 
@@ -500,18 +511,30 @@ Características finales: QR, CoA, reportes y despliegue
 ## Dependencias entre Sprints
 
 ```
-Sprint 1 ✅ ────► Sprint 2 ❌ ────► Sprint 3 ❌ ────► Sprint 4 ❌ ────► Sprint 5 ❌ ────► Sprint 6 ❌
+Sprint 1 ✅ ────► Sprint 2 ✅ ────► Sprint 3 ❌ ────► Sprint 4 ❌ ────► Sprint 5 ❌ ────► Sprint 6 ❌
    │              │              │              │              │              │
    ▼              ▼              ▼              ▼              ▼              ▼
  Samples      14 Anaqueles   Matriz de       Location       Movements     QR/CoA
- Proveedores    Hileras      Compatibilidad  Engine         Import       Reports
- Clases GHS                   (Vecinos)      Dosificación  Excel         Alerts
-                                                   FEFO        Alerts       .exe
-                                       Reubicación Mínima
+ Proveedores    Hileras     Compatibilidad  Engine         Import       Reports
+ Clases GHS    anaquel-      (Vecinos)      Dosificación    Excel         Alerts
+               proveedor                   FEFO              Alerts       .exe
+                                   Reubicación Mínima
 ```
 
 ---
 
-**Estado del Proyecto: EN DESARROLLO - Sprint 1 COMPLETADO (60%)**
+## Avance Real del Proyecto
+
+| Área | Completado | Pendiente |
+|------|------------|-----------|
+| Backend (Modelos + Routers) | 85% | 15% |
+| Frontend (UI básica) | 70% | 30% |
+| Lógica de negocio (Services) | 0% | 100% |
+|seed de datos | 50% | 50% |
+| **TOTAL PROYECTO** | **45%** | **55%** |
+
+---
+
+**Estado del Proyecto: EN DESARROLLO - Sprint 2 PARCIAL (45%)**
 
 *Última actualización: Marzo 2026*

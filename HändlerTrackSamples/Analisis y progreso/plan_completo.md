@@ -69,10 +69,12 @@ Este plan se basa en las especificaciones del **Documento SRS v2.0** (Specificat
 - Importación masiva desde Excel
 - Sistema de **Dosificación** (RNF-1): Dividir muestra bulk en submuestras con QR únicos
 
-### Módulo 2: Estructura Física - 14 Anaqueles ❌ PENDIENTE
+### Módulo 2: Estructura Física - 14 Anaqueles ✅ PARCIAL
 - Modelo de 14 anaqueles con mapeo dinámico a proveedores (RNF-2)
-- Gestión de líneas: Cosmética, Farmacéutica, Industrial
-- Tabla relacional `anaquel_proveedor` para escalabilidad
+- ✅ Tabla relacional `anaquel_proveedor` implementada
+- ✅ CRUD de líneas, anaqueles y hileras
+- ❌ Seed de 14 anaqueles automático pendiente
+- ❌ Generación automática de 1820 hileras pendiente
 
 ### Módulo 3: Motor Inteligente de Localización ❌ PENDIENTE
 - **Matriz de Compatibilidad Química**: Evalúa vecinos adyacentes (izquierda/derecha)
@@ -98,12 +100,12 @@ Este plan se basa en las especificaciones del **Documento SRS v2.0** (Specificat
 
 ## 4. Requisitos No Funcionales (RNF)
 
-| RNF | Descripción | Implementación |
-|-----|-------------|----------------|
-| **RNF-1** | Integridad matemática de dosificación | Backend valida: `unidades × gramos_por_unidad ≤ cantidad_total` |
-| **RNF-2** | Escalabilidad proveedores/anaqueles | Tabla `anaquel_proveedor` (no hardcoded) |
-| **RNF-3** | Interacción con sistema de archivos | nodeIntegration/preload para leer PDFs CoA |
-| **RNF-4** | Previsualización de cuadrícula | WarehouseMap.jsx muestra preview antes de Commit |
+| RNF | Descripción | Implementación | Estado |
+|-----|-------------|----------------|--------|
+| **RNF-1** | Integridad matemática de dosificación | Backend valida: `unidades × gramos_por_unidad ≤ cantidad_total` | ❌ Pendiente |
+| **RNF-2** | Escalabilidad proveedores/anaqueles | Tabla `anaquel_proveedor` (no hardcoded) | ✅ Completado |
+| **RNF-3** | Interacción con sistema de archivos | nodeIntegration/preload para leer PDFs CoA | ❌ Pendiente |
+| **RNF-4** | Previsualización de cuadrícula | WarehouseMap.jsx muestra preview antes de Commit | ❌ Pendiente |
 
 ---
 
@@ -119,20 +121,23 @@ Este plan se basa en las especificaciones del **Documento SRS v2.0** (Specificat
 - [x] Modelo ClasePeligro y seed de datos GHS
 - [x] Integración de proveedor en formulario de muestras
 
-### Sprint 2: Estructura Física - 14 Anaqueles ❌ PENDIENTE
-- [ ] Creación de modelos de Proveedor, Línea, Anaquel, Hilera
-- [ ] Script de siembra (Seed): 7 proveedores, 3 líneas, 14 anaqueles, 1820 hileras
-- [ ] **Tabla anaquel_proveedor** (RNF-2)
-- [ ] Frontend: Dashboard de 14 anaqueles
+### Sprint 2: Estructura Física - 14 Anaqueles ✅ PARCIAL
+- [x] Creación de modelos de Línea, Anaquel, Hilera
+- [x] CRUD de líneas, anaqueles, hileras
+- [x] Script de siembra (Seed): proveedores y clases GHS
+- [x] **Tabla anaquel_proveedor** (RNF-2) ✅ IMPLEMENTADO
+- [x] Frontend: Dashboard de 14 anaqueles (Almacen.js)
+- [ ] Seed automático de 14 anaqueles según distribución SRS
+- [ ] Generación automática de 1820 hileras
 
 ### Sprint 3: El Cerebro Lógico (Compatibilidad Química) ❌ PENDIENTE
-- [ ] Creación de modelos de ClasePeligro y MatrizCompatibilidad
+- [ ] Creación de modelos de MatrizCompatibilidad
 - [ ] Script de siembra: 9 clases GHS y 36 reglas de interacción
 - [ ] Motor de verificación de vecinos
 - [ ] Frontend: Integración de clases de peligro en formularios
 
 ### Sprint 4: Algoritmo de Asignación, Dosificación y FEFO ❌ PENDIENTE
-- [ ] Desarrollo del `location_engine.py` (Línea → Proveedor → Dimensiones → Estado Físico → Vecinos → Compatibilidad)
+- [ ] Desarrollo del `location_engine.py`
 - [ ] Implementación de `dosificacion.py` (RNF-1)
 - [ ] Implementación de `fefo.py` (First Expire, First Out)
 - [ ] Algoritmo de Reubicación Mínima
@@ -176,14 +181,14 @@ Este plan se basa en las especificaciones del **Documento SRS v2.0** (Specificat
 | Incompatibilidad Química | Baja | Crítico | Validación en Backend + Alerta visual bloqueante en Frontend |
 | Fallo del hardware local | Media | Alto | Estrategia de backups automatizados (Local + Cloud) |
 | Resistencia al cambio del personal | Media | Medio | Interfaz intuitiva y capacitación pre-despliegue |
-| Proveedor no existente en anaquel | Baja | Medio | Tabla anaquel_proveedor dinámica (RNF-2) |
+| Proveedor no existente en anaquel | Baja | Medio | Tabla anaquel_proveedor dinámica (RNF-2) ✅ Implementada |
 
 ---
 
 ## 8. Cronograma y Entregables Finales
 
 - **Duración Total**: 12 Semanas (6 Sprints)
-- **Avance Actual**: ~60% (Sprint 1 completado)
+- **Avance Actual**: ~45% (Sprint 1-2 parcialmente completado)
 - **Entregables**:
   - Archivo instalable .exe de la aplicación de escritorio Händler TrackSamples
   - Base de datos estructurada con 14 anaqueles y reglas SGA
@@ -202,4 +207,6 @@ Este plan se basa en las especificaciones del **Documento SRS v2.0** (Specificat
 
 *Este plan está diseñado bajo estándares profesionales de Ingeniería de Software, garantizando escalabilidad, cumplimiento normativo de seguridad de laboratorios y una experiencia de usuario altamente eficiente.*
 
-**Estado: EN DESARROLLO - Sprint 1 COMPLETADO (60%)**
+**Estado: EN DESARROLLO - Sprint 2 PARCIAL (45%)**
+
+*Última actualización: Marzo 2026*
