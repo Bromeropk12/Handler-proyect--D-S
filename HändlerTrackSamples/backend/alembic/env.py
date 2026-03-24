@@ -16,6 +16,9 @@ from alembic import context
 # Import your models' Base
 from database.database import Base
 from models.user import User
+from models.proveedor import Proveedor
+from models.clase_peligro import ClasePeligro
+from models.sample import Sample
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

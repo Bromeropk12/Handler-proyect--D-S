@@ -6,8 +6,8 @@ Aplicación de escritorio para la gestión y localización de muestras de materi
 
 ## Estado del Proyecto
 
-**Versión: 1.0 - EN DESARROLLO**  
-**Avance: ~30% Completado**
+**Versión: 2.0 - EN DESARROLLO**  
+**Avance: ~60% Completado**
 
 ### Funcionalidades Implementadas ✅
 
@@ -20,53 +20,88 @@ Aplicación de escritorio para la gestión y localización de muestras de materi
 | Base de Datos MySQL | ✅ Configurada | Con migraciones Alembic |
 | Frontend Electron+React | ✅ Estructura base | UI con Material-UI |
 | Script de Backup | ✅ Operativo | PowerShell para backups |
+| **Catálogo de Muestras** | ✅ **Completo** | **CRUD completo con filtros, búsqueda y paginación** |
+| **Gestión de Proveedores** | ✅ **Completo** | **CRUD de proveedores con opciones** |
+| **Clases de Peligro GHS** | ✅ **Completo** | **Sistema de clasificación con seed de datos** |
+| **Selección de Proveedor en Muestras** | ✅ **Completo** | **Integración entre módulos** |
 
 ### Funcionalidades Pendientes ❌
 
 | Módulo | Estado | Descripción |
 |--------|--------|-------------|
-| Catálogo de Muestras | ❌ Pendiente | CRUD completo de muestras |
-| Estructura Física | ❌ Pendiente | Hileras, Anaqueles, Líneas |
+| Estructura Física (14 anaqueles) | ❌ Pendiente | Hileras, Anaqueles, Proveedores |
 | Compatibilidad Química | ❌ Pendiente | Motor de reglas SGA/GHS |
 | Localización Inteligente | ❌ Pendiente | Algoritmo de asignación |
+| Dosificación | ❌ Pendiente | División de muestras bulk |
+| FEFO (Primero en Vencer Primero en Salir) | ❌ Pendiente | Estrategia de despacho |
 | Mapa Visual 2D | ❌ Pendiente | Representación gráfica |
 | Movimientos | ❌ Pendiente | Entradas, Salidas, Trazabilidad |
 | Importación Excel | ❌ Pendiente | Carga masiva de datos |
 | Etiquetas y CoA | ❌ Pendiente | Generación de QR y certificados |
+| Alertas Inteligentes | ❌ Pendiente | Stock bajo, vencimientos |
 | Reportes | ❌ Pendiente | Exportación de informes |
+
+---
+
+## Especificaciones Clave del SRS v2.0
+
+### Modelo de 14 Anaqueles
+El sistema gestiona **14 anaqueles** distribuidos por Línea Comercial y Proveedor:
+
+| Línea | Total | Distribución |
+|-------|-------|--------------|
+| **Cosmética** | 5 | 3 BASF, 1 JRS, 1 THOR |
+| **Industria** | 3 | 1 BASF, 1 BASF & THOR (Mixto), 1 BULK |
+| **Farmacéutica** | 6 | 2 JRF, 1 SUDEEP & GIVAUDAN (Mixto), 2 BASF, 1 MEGGLE |
+
+### Volumetría Dinámica
+- Muestras ocupan `1x1`, `2x1`, o `2x2` (ancho × fondo)
+- Vista superior (altura ignorada)
+
+### Regla de Medición Estándar
+**Toda medición se realiza exclusivamente en Gramos (g)**
+
+### Workflows Críticos
+- **CU-01**: Ingreso + Dosificación + QR + Ubicación Inteligente
+- **CU-02**: Despacho FEFO + CoA + Etiqueta
 
 ---
 
 ## Plan de Desarrollo (6 Sprints)
 
-### Sprint 1: Catálogo de Muestras (Semanas 1-2)
-- [ ] Modelos: Sample, ClasePeligro
-- [ ] Schemas Pydantic
-- [ ] API REST CRUD
-- [ ] Frontend: Pages Samples
+### Sprint 1: Catálogo de Muestras + Datos Base (Semanas 1-2) ✅ COMPLETADO
+- [x] Modelos: Sample, ClasePeligro, Proveedor
+- [x] Schemas Pydantic
+- [x] API REST CRUD para muestras, proveedores, clases de peligro
+- [x] Frontend: Pages Muestras, Proveedores
+- [x] seed: Proveedores reales y clases GHS
 
-### Sprint 2: Estructura Física (Semanas 3-4)
+### Sprint 2: Estructura Física - 14 Anaqueles (Semanas 3-4)
 - [ ] Modelos: Linea, Anaquel, Hilera
 - [ ] API de gestión de bodega
-- [ ] seed: 3 líneas + 6 anaqueles + 780 hileras
+- [ ] seed: 14 anaqueles + 1820 hileras
+- [ ] Tabla anaquel_proveedor (RNF-2)
 
 ### Sprint 3: Compatibilidad Química (Semanas 5-6)
 - [ ] Modelo: MatrizCompatibilidad
 - [ ] Servicio: Reglas SGA/GHS (36 reglas)
-- [ ] API de verificación
+- [ ] API de verificación de vecinos
 
 ### Sprint 4: Localización Inteligente (Semanas 7-8)
 - [ ] Engine: Algoritmo de asignación
+- [ ] Servicio: Dosificación (RNF-1)
+- [ ] Servicio: FEFO
+- [ ] Servicio: Reubicación Mínima (Swap)
 - [ ] Frontend: WarehouseMap.jsx
-- [ ] Page: AsignarMuestra
 
 ### Sprint 5: Movimientos (Semanas 9-10)
 - [ ] Modelo: Movement
 - [ ] API: Entradas/Salidas
 - [ ] Importación Excel
+- [ ] Alertas inteligentes
 
 ### Sprint 6: Documentación Final (Semanas 11-12)
-- [ ] Servicio: QR, CoA
+- [ ] Servicio: QR, CoA (RNF-3)
 - [ ] Reportes
 - [ ] Build .exe
 
@@ -109,16 +144,24 @@ HändlerTrackSamples/
 │   ├── main.py                    # ✅ FastAPI principal
 │   ├── models/
 │   │   ├── user.py               # ✅ Usuario
-│   │   ├── sample.py             # ❌ Pendiente
-│   │   ├── movement.py           # ❌ Pendiente
+│   │   ├── sample.py             # ✅ Muestra
+│   │   ├── proveedor.py          # ✅ Proveedor
+│   │   ├── clase_peligro.py      # ✅ Clase de Peligro GHS
+│   │   ├── movimiento.py          # ❌ Pendiente
 │   │   ├── linea.py              # ❌ Pendiente
 │   │   ├── anaquel.py            # ❌ Pendiente
 │   │   ├── hilera.py             # ❌ Pendiente
-│   │   └── compatibilidad.py     # ❌ Pendiente
+│   │   └── compatibilidad.py    # ❌ Pendiente
 │   ├── schemas/
-│   │   └── __init__.py           # ✅ User schemas
-│   ├── routers/                  # ❌ No existe (crear)
-│   ├── services/                 # ❌ No existe (crear)
+│   │   └── __init__.py           # ✅ Todos los esquemas
+│   ├── routers/
+│   │   ├── muestras.py           # ✅ API Muestras
+│   │   ├── proveedores.py        # ✅ API Proveedores
+│   │   └── clases_peligro.py     # ✅ API Clases Peligro
+│   ├── services/                  # ❌ No existe (crear)
+│   │   ├── dosificacion.py       # ❌ Pendiente (RNF-1)
+│   │   ├── fefo.py               # ❌ Pendiente
+│   │   └── reubicacion.py        # ❌ Pendiente
 │   ├── security/                 # ✅ JWT Auth
 │   ├── database/                 # ✅ MySQL config
 │   └── alembic/                  # ✅ Migraciones
@@ -128,12 +171,17 @@ HändlerTrackSamples/
 │   │   │   ├── Login.js          # ✅
 │   │   │   ├── Welcome.js        # ✅
 │   │   │   ├── ChangePassword.js # ✅
-│   │   │   └── Samples.jsx       # ❌ Pendiente
+│   │   │   ├── Muestras.js       # ✅ COMPLETADO
+│   │   │   ├── Proveedores.js    # ✅ COMPLETADO
+│   │   │   ├── EntradaMuestra.jsx # ❌ Pendiente
+│   │   │   ├── Despacho.jsx      # ❌ Pendiente
+│   │   │   └── Alertas.jsx       # ❌ Pendiente
 │   │   ├── components/
 │   │   │   ├── Layout.js         # ✅
 │   │   │   ├── LoginForm.js      # ✅
-│   │   │   ├── WarehouseMap.jsx  # ❌ Pendiente
-│   │   │   └── QRGenerator.jsx   # ❌ Pendiente
+│   │   │   ├── WarehouseMap.jsx  # ❌ Pendiente (RNF-4)
+│   │   │   ├── QRGenerator.jsx   # ❌ Pendiente
+│   │   │   └── PDFViewer.jsx     # ❌ Pendiente (RNF-3)
 │   │   ├── context/
 │   │   │   └── AuthContext.js    # ✅
 │   │   └── services/
@@ -143,8 +191,9 @@ HändlerTrackSamples/
 │   ├── create_initial_user.py    # ✅
 │   └── backup_database.py        # ✅
 └── Analisis y progreso/
-    ├── plan_completo.md          # Plan original
-    └── plan_desarrollo_modular.md # Plan actualizado
+    ├── plan_completo.md          # Plan estratégico
+    ├── plan_desarrollo_modular.md # Plan detallado
+    └── Documento SRC.MD          # Especificaciones SRS
 ```
 
 ---
@@ -237,19 +286,32 @@ El sistema cuenta con autenticación JWT. Todas las rutas excepto `/login/` requ
 
 ## Documentación de Análisis
 
-El proyecto incluye un análisis completo en:
-- [`HändlerTrackSamples/Analisis y progreso/plan_completo.md`](HändlerTrackSamples/Analisis%20y%20progreso/plan_completo.md) - Plan original
-- [`HändlerTrackSamples/Analisis y progreso/plan_desarrollo_modular.md`](HändlerTrackSamples/Analisis%20y%20progreso/plan_desarrollo_modular.md) - Plan modular actualizado
+El proyecto incluye análisis completo en:
+- [`HändlerTrackSamples/Analisis y progreso/Documento SRC.MD`](HändlerTrackSamples/Analisis%20y%20progreso/Documento%20SRC.MD) - Especificaciones SRS v2.0
+- [`HändlerTrackSamples/Analisis y progreso/plan_completo.md`](HändlerTrackSamples/Analisis%20y%20progreso/plan_completo.md) - Plan estratégico
+- [`HändlerTrackSamples/Analisis y progreso/plan_desarrollo_modular.md`](HändlerTrackSamples/Analisis%20y%20progreso/plan_desarrollo_modular.md) - Plan detallado por sprints
+
+---
+
+## Requisitos No Funcionales (RNF) a Implementar
+
+| RNF | Descripción | Sprint |
+|-----|-------------|--------|
+| RNF-1 | Integridad matemática de dosificación | 4 |
+| RNF-2 | Escalabilidad proveedores/anaqueles | 2 |
+| RNF-3 | Interacción con sistema de archivos (CoA) | 6 |
+| RNF-4 | Previsualización de cuadrícula | 4 |
 
 ---
 
 ## Próximos Pasos Inmediatos
 
-1. **Sprint 1 - Catálogo de Muestras**
-   - Crear modelo `Sample` en `backend/models/sample.py`
-   - Crear modelo `ClasePeligro` en `backend/models/clase_peligro.py`
-   - Crear carpeta `backend/routers/` y endpoints CRUD
-   - Crear frontend `pages/Samples.jsx`
+1. **Sprint 2 - Estructura Física**
+   - Crear modelo `Linea` en `backend/models/linea.py`
+   - Crear modelo `Anaquel` en `backend/models/anaquel.py`
+   - Crear modelo `Hilera` en `backend/models/hilera.py`
+   - Crear tabla `anaquel_proveedor` (RNF-2)
+   - Crear seed de 14 anaqueles y 1820 hileras
 
 ---
 
@@ -263,4 +325,4 @@ El proyecto incluye un análisis completo en:
 
 **Handler S.A.S.** - Distribuidor líder de materias primas para industrias farmacéutica, cosmética e industrial
 
-*Versión: 1.0 - Estado: EN DESARROLLO (30%)*
+*Versión: 2.0 - Estado: EN DESARROLLO (60%)*

@@ -1,34 +1,64 @@
-# Plan de Desarrollo Modular - Händler TrackSamples
+# Plan de Desarrollo Modular - Händler TrackSamples (WMS Inteligente)
 
 ## Estado Actual del Proyecto
 
-### ✅ Implementado (Sprint 1 - Parcial)
+### ✅ Implementado (Sprint 1 - COMPLETADO)
 | Módulo | Componente | Estado |
 |--------|------------|--------|
 | Backend | FastAPI configurado | ✅ Completo |
 | Backend | MySQL + SQLAlchemy + Alembic | ✅ Completo |
 | Backend | Autenticación JWT + bcrypt | ✅ Completo |
 | Backend | Modelo User | ✅ Completo |
-| Backend | Schemas Pydantic (User) | ✅ Completo |
+| Backend | Modelo Sample | ✅ Completo |
+| Backend | Modelo Proveedor | ✅ Completo |
+| Backend | Modelo ClasePeligro | ✅ Completo |
+| Backend | Schemas Pydantic (User, Sample, Proveedor, ClasePeligro) | ✅ Completo |
+| Backend | Routers API (samples, proveedores, clases_peligro) | ✅ Completo |
 | Frontend | Electron + React | ✅ Completo |
 | Frontend | Material UI Theme | ✅ Completo |
 | Frontend | Login + ChangePassword | ✅ Completo |
 | Frontend | AuthContext | ✅ Completo |
+| Frontend | Muestras.js (Catálogo completo) | ✅ Completo |
+| Frontend | Proveedores.js (Gestión de proveedores) | ✅ Completo |
 | Scripts | Backup PowerShell | ✅ Completo |
+| Datos | Seed: Proveedores reales de Handler | ✅ Completo |
+| Datos | Seed: Clases GHS (9 clases) | ✅ Completo |
 
-### ❌ Por Implementar
+### ❌ Por Implementar (Sprints 2-6)
 | Módulo | Componente | Estado |
 |--------|------------|--------|
-| Backend | Modelos (Sample, Movement, Hilera, etc.) | ❌ Falta |
-| Backend | Routers/API endpoints | ❌ Falta |
+| Backend | Modelos: Linea, Anaquel, Hilera | ❌ Falta |
+| Backend | Modelo: MatrizCompatibilidad | ❌ Falta |
+| Backend | Modelo: Movement | ❌ Falta |
 | Backend | Services (business logic) | ❌ Falta |
 | Backend | Motor de compatibilidad química | ❌ Falta |
-| Backend | Seed de datos SGA/GHS | ❌ Falta |
-| Frontend | Catálogo de Muestras | ❌ Falta |
-| Frontend | Mapa de Almacén 2D | ❌ Falta |
+| Frontend | Mapa de Almacén 2D (WarehouseMap) | ❌ Falta |
 | Frontend | Movimientos (IN/OUT) | ❌ Falta |
 | Frontend | Generación QR | ❌ Falta |
 | Frontend | Visualizador CoA | ❌ Falta |
+| Frontend | Importación Excel | ❌ Falta |
+| Frontend | Alertas Inteligentes | ❌ Falta |
+
+---
+
+## Requisitos Críticos del Documento SRS (v2.0)
+
+### Modelo de 14 Anaqueles (SECCIÓN 2.1)
+El sistema debe soportar **14 anaqueles** distribuidos por Línea Comercial:
+
+| Línea | Total | Distribución por Proveedor |
+|-------|-------|----------------------------|
+| **Cosmética** | 5 | 3 BASF, 1 JRS, 1 THOR |
+| **Industria** | 3 | 1 BASF, 1 BASF & THOR (Mixto), 1 BULK |
+| **Farmacéutica** | 6 | 2 JRF, 1 SUDEEP & GIVAUDAN (Mixto), 2 BASF, 1 MEGGLE |
+
+### Volumetría Dinámica (SECCIÓN 2.2)
+- Por defecto, una muestra ocupa `1x1` (ancho x fondo)
+- Sistema debe permitir: `1x1`, `2x1`, `2x2`, etc.
+- La altura física es ignorada (vista superior)
+
+### Regla de Medición Estándar (SECCIÓN 4)
+**Toda medición de cantidad y volumen se realiza exclusivamente en Gramos (g)**
 
 ---
 
@@ -38,95 +68,112 @@
 backend/
 ├── models/           # Modelos SQLAlchemy
 │   ├── user.py       ✅ Existe
-│   ├── sample.py     📦 Nuevo
+│   ├── sample.py     ✅ Existe
+│   ├── proveedor.py  ✅ Existe
+│   ├── clase_peligro.py  ✅ Existe
 │   ├── movement.py   📦 Nuevo
-│   ├── hilera.py     📦 Nuevo
-│   ├── anaquel.py    📦 Nuevo
 │   ├── linea.py      📦 Nuevo
+│   ├── anaquel.py    📦 Nuevo (con relación a proveedor)
+│   ├── hilera.py     📦 Nuevo (con dimensiones 1x1, 2x1, 2x2)
 │   └── compatibilidad.py  📦 Nuevo
 ├── schemas/          # Esquemas Pydantic
 │   ├── __init__.py   ✅ Existe (ampliar)
-│   ├── sample.py     📦 Nuevo
+│   ├── sample.py     ✅ Existe
 │   ├── movement.py   📦 Nuevo
 │   └── location.py   📦 Nuevo
-├── routers/          # Endpoints API (NUEVO)
-│   ├── __init__.py
-│   ├── auth.py       ✅ Existe (mover a routers)
-│   ├── samples.py    📦 Nuevo
+├── routers/          # Endpoints API
+│   ├── __init__.py   ✅ Existe
+│   ├── auth.py       ✅ Existe
+│   ├── muestras.py   ✅ Existe
+│   ├── proveedores.py    ✅ Existe
+│   ├── clases_peligro.py ✅ Existe
 │   ├── movements.py  📦 Nuevo
 │   ├── location.py   📦 Nuevo
 │   └── reports.py    📦 Nuevo
 ├── services/         # Lógica de negocio (NUEVO)
 │   ├── __init__.py
-│   ├── sample_service.py
 │   ├── location_engine.py
 │   ├── compatibilidad.py
+│   ├── dosificacion.py  📦 Nuevo (RNF-1)
+│   ├── reubicacion.py   📦 Nuevo (Algoritmo Swap)
+│   ├── fefo.py          📦 Nuevo (First Expire First Out)
 │   └── import_excel.py
-└── seed/             # Datos iniciales (NUEVO)
-    ├── __init__.py
-    └── sga_classes.py
+└── seed/             # Datos iniciales
+    ├── __init__.py   ✅ Existe
+    └── sga_classes.py ✅ Existe
 ```
 
 ---
 
-# PLAN DE DESARROLLO - 6 SPRINTS
+# PLAN DE DESARROLLO - 6 SPRINTS (ACTUALIZADO)
 
-## Sprint 1: Catálogo de Muestras (Semanas 1-2)
+## Sprint 1: Catálogo de Muestras + Datos Base (Semanas 1-2) ✅ COMPLETADO
 
 ### Objetivo
-CRUD completo de muestras químicas con clasificación por clase de peligro
+CRUD completo de muestras químicas con clasificación por clase de peligro y carga de datos iniciales
 
 ### Backend - Modelos y Schemas
-- [ ] `models/sample.py` - Modelo Sample con campos:
-  - id, nombre, CAS, proveedor, fecha_recepcion
-  - clase_peligro_id, linea_negocio
-  - volumen, unidad_volumen, peso, unidad_peso
-  - estado_fisico (liquido/solido)
-  - ubicacion_actual (nullable)
-  - qr_code, fecha_vencimiento, observaciones
+- [x] `models/sample.py` - Modelo Sample con campos:
+  - id, nombre, CAS, lote, proveedor_id
+  - cantidad_gramos (decimal, restricción: solo gramos)
+  - linea_negocio, clase_peligro_id
+  - dimensiones (1x1, 2x1, 2x2 - ancho x fondo)
+  - fecha_manufactura, fecha_vencimiento
+  - qr_code, coa_path, estado (activo/despachado)
+  - sample_parent_id (para dosificación)
   - created_at, updated_at
 
-- [ ] `models/clase_peligro.py` - Modelo ClasePeligro:
+- [x] `models/clase_peligro.py` - Modelo ClasePeligro:
   - id, codigo (GHS01-GHS09), nombre, descripcion
   - icono, color, activo
 
-- [ ] `schemas/sample.py` - Pydantic schemas:
+- [x] `models/proveedor.py` - Modelo Proveedor:
+  - id, nombre, nit, activo
+
+- [x] `schemas/sample.py` - Pydantic schemas:
   - SampleCreate, SampleUpdate, SampleResponse
   - SampleFilter (para búsqueda)
 
-- [ ] `schemas/clase_peligro.py` - Schemas para clases
-
 ### Backend - API
-- [ ] `routers/samples.py`:
-  - `POST /api/samples` - Crear muestra
-  - `GET /api/samples` - Listar muestras (con filtros)
-  - `GET /api/samples/{id}` - Ver detalles
-  - `PUT /api/samples/{id}` - Actualizar
-  - `DELETE /api/samples/{id}` - Eliminar
-  - `GET /api/samples/search?q=` - Búsqueda texto
+- [x] `routers/muestras.py`:
+  - `POST /api/muestras` - Crear muestra
+  - `GET /api/muestras` - Listar muestras (con filtros)
+  - `GET /api/muestras/{id}` - Ver detalles
+  - `PUT /api/muestras/{id}` - Actualizar
+  - `DELETE /api/muestras/{id}` - Eliminar (Soft delete)
+  - `GET /api/muestras/search?q=` - Búsqueda texto
 
-- [ ] `routers/clases_peligro.py`:
+- [x] `routers/clases_peligro.py`:
   - `GET /api/clases-peligro` - Listar clases
 
+- [x] `routers/proveedores.py`:
+  - `GET /api/proveedores` - Listar proveedores
+  - `POST /api/proveedores` - Crear proveedor
+  - `PUT /api/proveedores/{id}` - Actualizar proveedor
+  - `DELETE /api/proveedores/{id}` - Eliminar proveedor
+
 ### Frontend - Catálogo
-- [ ] `pages/Samples.jsx` - Lista de muestras con DataGrid
-- [ ] `pages/SampleForm.jsx` - Formulario crear/editar
-- [ ] `pages/SampleDetail.jsx` - Ver detalles
-- [ ] `components/SampleFilters.jsx` - Filtros de búsqueda
+- [x] `pages/Muestras.js` - Lista de muestras con tabla, filtros y paginación
+- [x] `pages/Proveedores.js` - Gestión de proveedores
+- [x] Integración de proveedor en formulario de muestras
 
 ### seed/ Datos Iniciales
-- [ ] Insertar 9 clases GHS (GHS01-GHS09)
+- [x] Insertar proveedores (BASF, THOR, JRS, JRF, SUDEEP, GIVAUDAN, MEGGLE, etc.)
+- [x] Insertar 9 clases GHS (GHS01-GHS09)
+- [ ] **RNF-2**: Tabla `anaquel_proveedor` para mapeo dinámico (Sprint 2)
 
 ### Entregable Sprint 1
 - CRUD de muestras funcional en UI
-- Búsqueda y filtrado por nombre, CAS, clase
+- Búsqueda y filtrado por nombre, CAS, clase, proveedor, línea
+- Catálogo de proveedores y clases de peligro
+- Seed de proveedores reales y clases GHS
 
 ---
 
-## Sprint 2: Estructura Física - Hileras y Anaqueles (Semanas 3-4)
+## Sprint 2: Estructura Física - 14 Anaqueles (Semanas 3-4) ❌ PENDIENTE
 
 ### Objetivo
-Definir la estructura física del almacén con anaqueles, niveles e hileras
+Definir la estructura física del almacén con **14 anaqueles** según distribución del SRS
 
 ### Backend - Modelos
 - [ ] `models/linea.py` - Líneas de negocio:
@@ -135,12 +182,38 @@ Definir la estructura física del almacén con anaqueles, niveles e hileras
 
 - [ ] `models/anaquel.py` - Anaquel:
   - id, linea_id, nombre, niveles (10), hileras (13)
+  - profundidad (9 posiciones por hilera)
   - descripcion, activo
+  - **NUEVO**: relacion con proveedores (tabla anaquel_proveedor)
 
 - [ ] `models/hilera.py` - Hilera (posición):
   - id, anaquel_id, nivel (1-10), hilera (1-13)
   - capacidad_max (9), posiciones_usadas
+  - ancho (1-2), fondo (1-2) - dimensiones soportadas
   - estado (disponible/ocupado/mantenimiento)
+
+### Configuración de 14 Anaqueles (SECCIÓN 2.1 SRS)
+```
+Cosmética (5):
+  - Anaquel COS-BASF-1 (BASF)
+  - Anaquel COS-BASF-2 (BASF)
+  - Anaquel COS-BASF-3 (BASF)
+  - Anaquel COS-JRS-1 (JRS)
+  - Anaquel COS-THOR-1 (THOR)
+
+Industria (3):
+  - Anaquel IND-BASF-1 (BASF)
+  - Anaquel IND-BASF-THOR (BASF & THOR Mixto)
+  - Anaquel IND-BULK (BULK - muestras grandes)
+
+Farmacéutica (6):
+  - Anaquel FAR-JRF-1 (JRF)
+  - Anaquel FAR-JRF-2 (JRF)
+  - Anaquel FAR-SUD-GIV (SUDEEP & GIVAUDAN Mixto)
+  - Anaquel FAR-BASF-1 (BASF)
+  - Anaquel FAR-BASF-2 (BASF)
+  - Anaquel FAR-MEGGLE-1 (MEGGLE)
+```
 
 ### Backend - API
 - [ ] `routers/lineas.py` - CRUD líneas
@@ -150,26 +223,28 @@ Definir la estructura física del almacén con anaqueles, niveles e hileras
 
 ### Backend - Services
 - [ ] `services/hilera_service.py`:
-  - get_hileras_disponibles(linea, estado_fisico)
+  - get_hileras_disponibles(linea, estado_fisico, dimensiones)
   - calcular_capacidad_por_nivel()
 
 ### Frontend
 - [ ] `pages/Lineas.jsx` - Gestión de líneas
-- [ ] `pages/Anaqueles.jsx` - Gestión de anaqueles
+- [ ] `pages/Anaqueles.jsx` - Gestión de anaqueles (Dashboard 14 anaqueles)
 - [ ] `pages/Hileras.jsx` - Vista de grid de hileras
 
 ### seed/ Datos Iniciales
 - [ ] Insertar 3 líneas (Cosmética, Farmacéutica, Industrial)
-- [ ] Crear anaqueles por línea (ej: 2 por línea = 6 total)
-- [ ] Generar todas las hileras (6 anaqueles × 10 niveles × 13 hileras = 780 hileras)
+- [ ] Crear 14 anaqueles según distribución exacta
+- [ ] Generar todas las hileras (14 × 10 niveles × 13 hileras = 1820 hileras)
+- [ ] Crear tabla anaquel_proveedor
 
 ### Entregable Sprint 2
-- Estructura física configurada
+- Estructura física de 14 anaqueles configurada
 - Vista de ocupación de anaqueles
+- Mapeo proveedor-anaquel dinámico (RNF-2)
 
 ---
 
-## Sprint 3: Motor de Compatibilidad Química (Semanas 5-6)
+## Sprint 3: Motor de Compatibilidad Química (Semanas 5-6) ❌ PENDIENTE
 
 ### Objetivo
 Implementar el "cerebro" del sistema: matriz de compatibilidad y reglas SGA
@@ -202,25 +277,36 @@ Implementar el "cerebro" del sistema: matriz de compatibilidad y reglas SGA
 
 ---
 
-## Sprint 4: Asignación Inteligente de Ubicación (Semanas 7-8)
+## Sprint 4: Asignación Inteligente + Dosificación + FEFO (Semanas 7-8) ❌ PENDIENTE
 
 ### Objetivo
-Algoritmo para sugerir la mejor ubicación según reglas de negocio
+Algoritmo para sugerir la mejor ubicación con soporte para dosificación y estrategia FEFO
 
-### Backend - Services
+### Backend - Services (NUEVOS)
+- [ ] `services/dosificacion.py` (RNF-1):
+  - validar_integridad_matematica(cantidad_total, unidades, gramos_por_unidad)
+  - crear_submuestras(parent_sample, unidades, gramos_cada_una)
+  - generar_qr_unico(submuestra_id)
+
 - [ ] `services/location_engine.py`:
   ```
   algoritmo_sugerir_ubicacion(muestra_id):
     1. Filtrar por línea de negocio
-    2. Filtrar por estado físico (líquido→niveles 1-4, sólido→5-10)
-    3. Buscar hileras con capacidad < 9
-    4. Para cada hilera disponible:
+    2. Filtrar por proveedor (RNF-2: tabla anaquel_proveedor)
+    3. Filtrar por dimensiones (1x1, 2x1, 2x2)
+    4. Filtrar por estado físico (líquido→niveles 1-4, sólido→5-10)
+    5. Buscar hileras con capacidad disponible para dimensiones
+    6. Para cada hilera disponible:
        - Verificar vecinos (izquierda/derecha)
        - Verificar compatibilidad química
-    5. Si no hay ubicación: sugerir "Reubicación Mínima"
+    7. Si no hay ubicación: sugerir "Reubicación Mínima"
        - Buscar muestra "Inerte" como buffer
-       - Proponer intercambio Swappero
+       - Proponer intercambio Swap (Algoritmo de Reorganización Mínima)
   ```
+
+- [ ] `services/fefo.py`:
+  - buscar_muestras_fefo(producto_id) → lista ordenada por fecha_vencimiento
+  - sugerir_despacho(producto_id, cantidad)
 
 - [ ] `services/reubicacion.py`:
   - calcular_movimientos_necesarios(muestra_conflicto)
@@ -231,40 +317,55 @@ Algoritmo para sugerir la mejor ubicación según reglas de negocio
   - `POST /api/location/sugerir` - Sugerir ubicación
   - `POST /api/location/asignar` - Asignar muestra a hilera
   - `POST /api/location/reubicacion` - Calcular reubicación
+  - `POST /api/location/dosificar` - Proceso de dosificación (RNF-1)
+
+- [ ] `routers/despacho.py`:
+  - `GET /api/despacho/sugerir-fefo?producto=` - Buscar muestras FEFO
+  - `POST /api/despacho/procesar` - Procesar despacho
 
 ### Frontend - Mapa Visual
 - [ ] `components/WarehouseMap.jsx`:
-  - Grid 2D de anaqueles
+  - Grid 2D de 14 anaqueles
   - Colores por nivel de ocupación
   - Click en hilera → ver contenido
   - Animación de ubicación sugerida
+  - **RNF-4**: Vista previa de redimensión
 
 - [ ] `pages/AsignarMuestra.jsx`:
   - Formulario de muestra → sugerencias visuales
   - Mapa interactivo para seleccionar ubicación
+  - Soporte para dosificación (CU-01)
+
+- [ ] `pages/Despacho.jsx`:
+  - Búsqueda de productos
+  - Indicador visual FEFO (color verde/estrella para próximos a vencer)
+  - Generación de etiqueta de despacho
 
 ### Entregable Sprint 4
 - Algoritmo de asignación funcionando
-- Mapa visual 2D del almacén
+- Proceso de dosificación implementado (RNF-1)
+- Estrategia FEFO para despachos
+- Mapa visual 2D del almacén (14 anaqueles)
 
 ---
 
-## Sprint 5: Movimientos y Trazabilidad (Semanas 9-10)
+## Sprint 5: Movimientos y Trazabilidad (Semanas 9-10) ❌ PENDIENTE
 
 ### Objetivo
 Registro de entradas y salidas, historial de movimientos
 
 ### Backend - Modelos
 - [ ] `models/movement.py`:
-  - id, sample_id, tipo (ENTRADA/SALIDA/REUBICACION)
+  - id, sample_id, tipo (ENTRADA/SALIDA/REUBICACION/DOSIFICACION)
   - hilera_origen_id, hilera_destino_id
-  - usuario_id, cantidad, observaciones
+  - usuario_id, cantidad_gramos, observaciones
   - fecha_movimiento
+  - batch_id (para rastrear submuestras)
 
 ### Backend - API
 - [ ] `routers/movements.py`:
-  - `POST /api/movimientos/entrada` - Registrar entrada
-  - `POST /api/movimientos/salida` - Registrar salida
+  - `POST /api/movimientos/entrada` - Registrar entrada (CU-01)
+  - `POST /api/movimientos/salida` - Registrar salida (CU-02)
   - `POST /api/movimientos/reubicacion` - Reubicar
   - `GET /api/movimientos/historial?sample_id=`
   - `GET /api/movimientos/reporte?fecha_inicio=&fecha_fin=`
@@ -275,11 +376,18 @@ Registro de entradas y salidas, historial de movimientos
   - actualizar_capacidad_hilera(hilera_id, delta)
   - generar_reporte_movimientos(fecha_inicio, fecha_fin)
 
+### Backend - Alertas (Módulo 3 SRS)
+- [ ] `services/alertas_service.py`:
+  - verificar_stock_bajo() → alertas de stock
+  - verificar_muestras_por_vencer(dias=30) → alertas tempranas
+  - verificar_optimizacion_espacio() → notificaciones
+
 ### Frontend - Movimientos
 - [ ] `pages/Movimientos.jsx` - Dashboard de movimientos
-- [ ] `pages/EntradaMuestra.jsx` - Formulario de entrada
-- [ ] `pages/SalidaMuestra.jsx` - Formulario de salida
+- [ ] `pages/EntradaMuestra.jsx` - Formulario de entrada + dosificación
+- [ ] `pages/SalidaMuestra.jsx` - Formulario de salida FEFO
 - [ ] `components/MovimientoHistory.jsx` - Historial filtrable
+- [ ] `pages/Alertas.jsx` - Panel de alertas inteligentes
 
 ### Importación Excel
 - [ ] `services/import_excel.py`:
@@ -293,12 +401,13 @@ Registro de entradas y salidas, historial de movimientos
   - Validación y confirmación
 
 ### Entregable Sprint 5
-- Registro de movimientos
+- Registro de movimientos completo
 - Importación masiva desde Excel
+- Sistema de alertas inteligentes
 
 ---
 
-## Sprint 6: Documentación, QR y Finalización (Semanas 11-12)
+## Sprint 6: Documentación, QR, CoA y Finalización (Semanas 11-12) ❌ PENDIENTE
 
 ### Objetivo
 Características finales: QR, CoA, reportes y despliegue
@@ -307,33 +416,46 @@ Características finales: QR, CoA, reportes y despliegue
 - [ ] `services/qr_service.py`:
   - generar_qr(sample_id) → imagen base64
   - generar_etiqueta(sample_id) → PDF
+  - generar_etiqueta_despacho(sample_id) → PDF
 
-- [ ] `services/coa_service.py`:
+- [ ] `services/coa_service.py` (RNF-3):
   - guardar_coa(sample_id, file_path) → guardar en disco
-  - obtener_coa(sample_id) →路径
+  - obtener_coa(sample_id) → ruta
   - eliminar_coa(sample_id)
+  - generar_ruta_automatica(proveedor, producto, lote)
 
 - [ ] `services/reports_service.py`:
   - generar_reporte_inventario() → Excel
   - generar_reporte_movimientos() → Excel/PDF
   - generar_reporte_ocupacion() → JSON/Excel
+  - generar_reporte_vencimientos() → Excel
 
 ### Backend - API
 - [ ] `routers/qr.py`:
   - `GET /api/qr/{sample_id}` - Generar QR
   - `GET /api/etiqueta/{sample_id}` - Generar etiqueta PDF
+  - `GET /api/etiqueta-despacho/{sample_id}` - Etiqueta despacho
 
 - [ ] `routers/coa.py`:
-  - `POST /api/coa/{sample_id}` - Subir CoA
+  - `POST /api/coa/{sample_id}` - Subir CoA (RNF-3)
   - `GET /api/coa/{sample_id}` - Descargar/ver CoA
+  - `GET /api/coa/ruta-sugerida` - Generar ruta automática
 
 - [ ] `routers/reports.py`:
   - `GET /api/reportes/inventario` - Reporte inventario
   - `GET /api/reportes/movimientos` - Reporte movimientos
+  - `GET /api/reportes/ocupacion` - Reporte ocupación
+  - `GET /api/reportes/vencimientos` - Reporte vencimientos
+
+- [ ] `routers/alertas.py`:
+  - `GET /api/alertas/stock-bajo` - Alertas stock
+  - `GET /api/alertas/vencimientos` - Alertas vencimientos
+  - `GET /api/alertas/optimizacion` - Oportunidades de optimización
 
 ### Frontend - Final
 - [ ] `components/QRGenerator.jsx` - Mostrar QR
-- [ ] `components/PDFViewer.jsx` - Visor de CoA
+- [ ] `components/PDFViewer.jsx` - Visor de CoA (RNF-3)
+- [ ] `components/EtiquetaDespacho.jsx` - Vista previa de etiqueta
 - [ ] `pages/Reportes.jsx` - Dashboard de reportes
 - [ ] `pages/ImportarExportar.jsx` - Import/Export
 
@@ -354,24 +476,43 @@ Características finales: QR, CoA, reportes y despliegue
 
 ## Resumen de Entregables por Sprint
 
-| Sprint | Módulo Principal | Entregable |
-|--------|------------------|------------|
-| 1 | Catálogo de Muestras | CRUD muestras + búsqueda |
-| 2 | Estructura Física | Anaqueles + Hileras configurados |
-| 3 | Compatibilidad Química | Motor de reglas SGA |
-| 4 | Localización | Algoritmo + Mapa 2D |
-| 5 | Movimientos | Entradas/Salidas + Import Excel |
-| 6 | Documentación | QR, CoA, Reportes, .exe |
+| Sprint | Módulo Principal | Entregable | Estado |
+|--------|------------------|-------------|--------|
+| 1 | Catálogo de Muestras | CRUD muestras + proveedores + clases | ✅ COMPLETADO |
+| 2 | Estructura Física | 14 Anaqueles + Hileras configurados | ❌ PENDIENTE |
+| 3 | Compatibilidad Química | Motor de reglas SGA | ❌ PENDIENTE |
+| 4 | Localización Inteligente | Algoritmo + Dosificación + FEFO + Mapa 2D | ❌ PENDIENTE |
+| 5 | Movimientos | Entradas/Salidas + Import Excel + Alertas | ❌ PENDIENTE |
+| 6 | Documentación | QR, CoA, Reportes, .exe | ❌ PENDIENTE |
+
+---
+
+## Requisitos No Funcionales (RNF) Implementación
+
+| RNF | Descripción | Ubicación | Estado |
+|-----|-------------|-----------|--------|
+| RNF-1 | Integridad matemática de dosificación | Sprint 4 - dosificacion.py | ❌ PENDIENTE |
+| RNF-2 | Escalabilidad proveedores/anaqueles | Sprint 2 - tabla anaquel_proveedor | ❌ PENDIENTE |
+| RNF-3 | Interacción con sistema de archivos | Sprint 6 - coa_service.py | ❌ PENDIENTE |
+| RNF-4 | Previsualización de cuadrícula | Sprint 4 - WarehouseMap.jsx | ❌ PENDIENTE |
 
 ---
 
 ## Dependencias entre Sprints
 
 ```
-Sprint 1 ─────► Sprint 2 ─────► Sprint 3 ─────► Sprint 4 ─────► Sprint 5 ─────► Sprint 6
+Sprint 1 ✅ ────► Sprint 2 ❌ ────► Sprint 3 ❌ ────► Sprint 4 ❌ ────► Sprint 5 ❌ ────► Sprint 6 ❌
    │              │              │              │              │              │
    ▼              ▼              ▼              ▼              ▼              ▼
- Samples      Líneas        Matriz de       Location      Movements     QR/CoA
-              Anaqueles    Compatibilidad  Engine        Import       Reports
-              Hileras                      Mapa 2D       Excel        .exe
+ Samples      14 Anaqueles   Matriz de       Location       Movements     QR/CoA
+ Proveedores    Hileras      Compatibilidad  Engine         Import       Reports
+ Clases GHS                   (Vecinos)      Dosificación  Excel         Alerts
+                                                   FEFO        Alerts       .exe
+                                       Reubicación Mínima
 ```
+
+---
+
+**Estado del Proyecto: EN DESARROLLO - Sprint 1 COMPLETADO (60%)**
+
+*Última actualización: Marzo 2026*

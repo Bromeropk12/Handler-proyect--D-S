@@ -83,3 +83,36 @@ export const usersAPI = {
   getMe: () => api.get('/users/me'),
   create: (data) => api.post('/users/', data),
 };
+
+// Funciones de Proveedores
+export const proveedoresAPI = {
+  getAll: (params) => api.get('/proveedores/', { params }),
+  getById: (id) => api.get(`/proveedores/${id}`),
+  create: (data) => api.post('/proveedores/', data),
+  update: (id, data) => api.put(`/proveedores/${id}`, data),
+  delete: (id) => api.delete(`/proveedores/${id}`),
+  getOptions: () => api.get('/proveedores/active/options'),
+};
+
+// Funciones de Clases de Peligro
+export const clasesPeligroAPI = {
+  getAll: (params) => api.get('/clases-peligro/', { params }),
+  getById: (id) => api.get(`/clases-peligro/${id}`),
+  create: (data) => api.post('/clases-peligro/', data),
+  update: (id, data) => api.put(`/clases-peligro/${id}`, data),
+  delete: (id) => api.delete(`/clases-peligro/${id}`),
+  getOptions: () => api.get('/clases-peligro/active/options'),
+};
+
+// Funciones de Muestras
+export const muestrasAPI = {
+  getAll: (params) => api.get('/muestras/', { params }),
+  getById: (id) => api.get(`/muestras/${id}`),
+  create: (data) => api.post('/muestras/', data),
+  update: (id, data) => api.put(`/muestras/${id}`, data),
+  delete: (id) => api.delete(`/muestras/${id}`),
+  getStats: () => api.get('/muestras/stats/summary'),
+  getLineasNegocioOptions: () => api.get('/muestras/options/lineas-negocio'),
+  getDimensionesOptions: () => api.get('/muestras/options/dimensiones'),
+  getEstadosOptions: () => api.get('/muestras/options/estados'),
+};

@@ -32,6 +32,7 @@ import {
   LocalShipping as ShippingIcon,
   Warning as WarningIcon,
   Settings as SettingsIcon,
+  Business as BusinessIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
@@ -64,6 +65,18 @@ const menuItems = [
     color: COLORS.primary,
   },
   { 
+    text: 'Muestras', 
+    icon: <InventoryIcon />, 
+    path: '/muestras',
+    color: '#0288d1',
+  },
+  { 
+    text: 'Proveedores', 
+    icon: <BusinessIcon />, 
+    path: '/proveedores',
+    color: '#7b1fa2',
+  },
+  { 
     text: 'Cambiar Contraseña', 
     icon: <PasswordIcon />, 
     path: '/change-password',
@@ -73,13 +86,6 @@ const menuItems = [
 
 // Menú de herramientas (futuro)
 const futureMenuItems = [
-  { 
-    text: 'Muestras', 
-    icon: <InventoryIcon />, 
-    path: '/samples',
-    color: '#0288d1',
-    disabled: true,
-  },
   { 
     text: 'Movimientos', 
     icon: <ShippingIcon />, 
