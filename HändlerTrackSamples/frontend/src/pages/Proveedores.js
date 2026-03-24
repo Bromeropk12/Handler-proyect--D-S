@@ -13,7 +13,8 @@ import {
 } from '@mui/material';
 import {
   Add as AddIcon, Search as SearchIcon, Edit as EditIcon,
-  Delete as DeleteIcon, Refresh as RefreshIcon, Business as BusinessIcon
+  Delete as DeleteIcon, Refresh as RefreshIcon, Business as BusinessIcon,
+  Cancel as CancelIcon
 } from '@mui/icons-material';
 import { proveedoresAPI } from '../services/api';
 
@@ -362,7 +363,16 @@ const Proveedores = () => {
                   renderValue={(selected) => (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {selected.map((value) => (
-                        <Chip key={value} label={value} size="small" />
+                        <Chip 
+                          key={value} 
+                          label={value} 
+                          size="small" 
+                          onDelete={() => {
+                            const nuevasLineas = (proveedorActual?.lineas_negocio || []).filter(l => l !== value);
+                            setProveedorActual(prev => ({ ...prev, lineas_negocio: nuevasLineas }));
+                          }}
+                          deleteIcon={<CancelIcon />}
+                        />
                       ))}
                     </Box>
                   )}

@@ -24,10 +24,9 @@
 | Datos | Seed: Proveedores reales de Handler | ✅ Completo |
 | Datos | Seed: Clases GHS (9 clases) | ✅ Completo |
 
-### ❌ Por Implementar (Sprints 2-6)
+### ❌ Por Implementar (Sprints 3-6)
 | Módulo | Componente | Estado |
 |--------|------------|--------|
-| Backend | Modelos: Linea, Anaquel, Hilera | ❌ Falta |
 | Backend | Modelo: MatrizCompatibilidad | ❌ Falta |
 | Backend | Modelo: Movement | ❌ Falta |
 | Backend | Services (business logic) | ❌ Falta |
@@ -170,23 +169,23 @@ CRUD completo de muestras químicas con clasificación por clase de peligro y ca
 
 ---
 
-## Sprint 2: Estructura Física - 14 Anaqueles (Semanas 3-4) ❌ PENDIENTE
+## Sprint 2: Estructura Física - 14 Anaqueles (Semanas 3-4) ✅ COMPLETADO
 
 ### Objetivo
 Definir la estructura física del almacén con **14 anaqueles** según distribución del SRS
 
 ### Backend - Modelos
-- [ ] `models/linea.py` - Líneas de negocio:
+- [x] `models/linea.py` - Líneas de negocio:
   - id, nombre (Cosmética/Farmacéutica/Industrial)
   - descripcion, activo
 
-- [ ] `models/anaquel.py` - Anaquel:
+- [x] `models/anaquel.py` - Anaquel:
   - id, linea_id, nombre, niveles (10), hileras (13)
   - profundidad (9 posiciones por hilera)
   - descripcion, activo
   - **NUEVO**: relacion con proveedores (tabla anaquel_proveedor)
 
-- [ ] `models/hilera.py` - Hilera (posición):
+- [x] `models/hilera.py` - Hilera (posición):
   - id, anaquel_id, nivel (1-10), hilera (1-13)
   - capacidad_max (9), posiciones_usadas
   - ancho (1-2), fondo (1-2) - dimensiones soportadas

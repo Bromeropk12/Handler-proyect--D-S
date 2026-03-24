@@ -222,6 +222,119 @@ class SampleWithRelations(Sample):
     proveedor: Optional[Proveedor] = None
     clase_peligro: Optional[ClasePeligro] = None
 
+# ============ Esquemas de Línea de Negocio ============
+
+class LineaBase(BaseModel):
+    nombre: str = Field(..., min_length=1, max_length=100)
+    descripcion: Optional[str] = None
+
+class LineaCreate(LineaBase):
+    """Schema para crear línea de negocio"""
+    pass
+
+class LineaUpdate(BaseModel):
+    """Schema para actualizar línea de negocio"""
+    nombre: Optional[str] = Field(None, min_length=1, max_length=100)
+    descripcion: Optional[str] = None
+    activa: Optional[bool] = None
+
+class Linea(LineaBase):
+    """Schema de respuesta de línea de negocio"""
+    id: int
+    activa: bool
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+# ============ Esquemas de Anaquel ============
+
+class AnaquelBase(BaseModel):
+    nombre: str = Field(..., min_length=1, max_length=100)
+    descripcion: Optional[str] = None
+    linea_id: int
+    niveles: int = Field(default=10, ge=1, le=20)
+    hileras_por_nivel: int = Field(default=13, ge=1, le=20)
+    posiciones_por_hilera: int = Field(default=9, ge=1, le=20)
+    proveedor_principal: Optional[str] = None
+
+class AnaquelCreate(AnaquelBase):
+    """Schema para crear anaquel"""
+    pass
+
+class AnaquelUpdate(BaseModel):
+    """Schema para actualizar anaquel"""
+    nombre: Optional[str] = Field(None, min_length=1, max_length=100)
+    descripcion: Optional[str] = None
+    linea_id: Optional[int] = None
+    niveles: Optional[int] = Field(None, ge=1, le=20)
+    hileras_por_nivel: Optional[int] = Field(None, ge=1, le=20)
+    posiciones_por_hilera: Optional[int] = Field(None, ge=1, le=20)
+    proveedor_principal: Optional[str] = None
+    activo: Optional[bool] = None
+    en_mantenimiento: Optional[bool] = None
+
+class Anaquel(AnaquelBase):
+    """Schema de respuesta de anaquel"""
+    id: int
+    activo: bool
+    en_mantenimiento: bool
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class AnaquelWithRelations(Anaquel):
+    """Schema de anaquel con relaciones"""
+    linea: Optional[Linea] = None
+    total_hileras: Optional[int] = None
+    hileras_disponibles: Optional[int] = None
+
+# ============ Esquemas de Hilera ============
+
+class HileraBase(BaseModel):
+    anaquel_id: int
+    nivel: int = Field(..., ge=1, le=20)
+    fila: int = Field(..., ge=1, le=20)
+    posicion: int = Field(..., ge=1, le=20)
+    capacidad_max: int = Field(default=9, ge=1, le=20)
+    ancho_min: int = Field(default=1, ge=1, le=5)
+    ancho_max: int = Field(default=2, ge=1, le=5)
+    fondo_min: int = Field(default=1, ge=1, le=5)
+    fondo_max: int = Field(default=2, ge=1, le=5)
+    estado_fisico_sugerido: Optional[str] = None
+    estado: str = "disponible"
+
+class HileraCreate(HileraBase):
+    """Schema para crear hilera"""
+    pass
+
+class HileraUpdate(BaseModel):
+    """Schema para actualizar hilera"""
+    capacidad_max: Optional[int] = Field(None, ge=1, le=20)
+    ancho_min: Optional[int] = Field(None, ge=1, le=5)
+    ancho_max: Optional[int] = Field(None, ge=1, le=5)
+    fondo_min: Optional[int] = Field(None, ge=1, le=5)
+    fondo_max: Optional[int] = Field(None, ge=1, le=5)
+    estado_fisico_sugerido: Optional[str] = None
+    estado: Optional[str] = None
+    muestra_id: Optional[int] = None
+
+class Hilera(HileraBase):
+    """Schema de respuesta de hilera"""
+    id: int
+    posiciones_usadas: int
+    muestra_id: Optional[int] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class HileraWithRelations(Hilera):
+    """Schema de hilera con relaciones"""
+    anaquel: Optional[Anaquel] = None
+    muestra: Optional[Sample] = None
+
 # ============ Schemas para listas paginadas ============
 
 class PaginatedResponse(BaseModel):
@@ -231,3 +344,45 @@ class PaginatedResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+
+# ============ Esquemas de AnaquelProveedor (RNF-2) ============
+
+class AnaquelProveedorBase(BaseModel):
+    """Schema base para relación anaquel-proveedor"""
+    anaquel_id: int
+    proveedor_id: int
+    capacidad_max_gramos: Optional[int] = None
+    es_principal: bool = False
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class AnaquelProveedorCreate(AnaquelProveedorBase):
+    """Schema para crear relación anaquel-proveedor"""
+    pass
+
+class AnaquelProveedorUpdate(BaseModel):
+    """Schema para actualizar relación anaquel-proveedor"""
+    capacidad_max_gramos: Optional[int] = None
+    es_principal: Optional[bool] = None
+    activo: Optional[bool] = None
+
+class AnaquelProveedorResponse(AnaquelProveedorBase):
+    """Schema de respuesta de relación anaquel-proveedor"""
+    id: int
+    activo: bool
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class AnaquelProveedorWithRelations(AnaquelProveedorResponse):
+    """Schema de relación anaquel-proveedor con datos relacionados"""
+    anaquel: Optional[Anaquel] = None
+    proveedor: Optional[Proveedor] = None
+
+# ============ Schema para Asignar Múltiples Proveedores ============
+
+class AsignarProveedoresRequest(BaseModel):
+    """Schema para asignar múltiples proveedores a un anaquel"""
+    anaquel_id: int = Field(..., description="ID del anaquel")
+    proveedor_ids: List[int] = Field(..., description="Lista de IDs de proveedores")

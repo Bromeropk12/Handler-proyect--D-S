@@ -7,7 +7,7 @@ Aplicación de escritorio para la gestión y localización de muestras de materi
 ## Estado del Proyecto
 
 **Versión: 2.0 - EN DESARROLLO**  
-**Avance: ~60% Completado**
+**Avance: ~70% Completado**
 
 ### Funcionalidades Implementadas ✅
 
@@ -24,12 +24,13 @@ Aplicación de escritorio para la gestión y localización de muestras de materi
 | **Gestión de Proveedores** | ✅ **Completo** | **CRUD de proveedores con opciones** |
 | **Clases de Peligro GHS** | ✅ **Completo** | **Sistema de clasificación con seed de datos** |
 | **Selección de Proveedor en Muestras** | ✅ **Completo** | **Integración entre módulos** |
+| **Gestión de Almacén** | ✅ **Completo** | **3 líneas + 14 anaqueles + 1820 hileras** |
 
 ### Funcionalidades Pendientes ❌
 
 | Módulo | Estado | Descripción |
 |--------|--------|-------------|
-| Estructura Física (14 anaqueles) | ❌ Pendiente | Hileras, Anaqueles, Proveedores |
+| Estructura Física (14 anaqueles) | ✅ Completo | 3 líneas, 14 anaqueles, 1820 hileras |
 | Compatibilidad Química | ❌ Pendiente | Motor de reglas SGA/GHS |
 | Localización Inteligente | ❌ Pendiente | Algoritmo de asignación |
 | Dosificación | ❌ Pendiente | División de muestras bulk |
@@ -76,11 +77,12 @@ El sistema gestiona **14 anaqueles** distribuidos por Línea Comercial y Proveed
 - [x] Frontend: Pages Muestras, Proveedores
 - [x] seed: Proveedores reales y clases GHS
 
-### Sprint 2: Estructura Física - 14 Anaqueles (Semanas 3-4)
-- [ ] Modelos: Linea, Anaquel, Hilera
-- [ ] API de gestión de bodega
-- [ ] seed: 14 anaqueles + 1820 hileras
-- [ ] Tabla anaquel_proveedor (RNF-2)
+### Sprint 2: Estructura Física - 14 Anaqueles (Semanas 3-4) ✅ COMPLETADO
+- [x] Modelos: Linea, Anaquel, Hilera
+- [x] API de gestión de bodega (lineas, anaqueles, hileras)
+- [x] seed: 14 anaqueles + 1820 hileras
+- [x] Frontend: Página Almacén.js con gestión completa
+- [x] Integración con menú de navegación
 
 ### Sprint 3: Compatibilidad Química (Semanas 5-6)
 - [ ] Modelo: MatrizCompatibilidad
@@ -173,6 +175,7 @@ HändlerTrackSamples/
 │   │   │   ├── ChangePassword.js # ✅
 │   │   │   ├── Muestras.js       # ✅ COMPLETADO
 │   │   │   ├── Proveedores.js    # ✅ COMPLETADO
+│   │   │   ├── Almacen.js         # ✅ COMPLETADO
 │   │   │   ├── EntradaMuestra.jsx # ❌ Pendiente
 │   │   │   ├── Despacho.jsx      # ❌ Pendiente
 │   │   │   └── Alertas.jsx       # ❌ Pendiente
@@ -325,4 +328,4 @@ El proyecto incluye análisis completo en:
 
 **Handler S.A.S.** - Distribuidor líder de materias primas para industrias farmacéutica, cosmética e industrial
 
-*Versión: 2.0 - Estado: EN DESARROLLO (60%)*
+*Versión: 2.0 - Estado: EN DESARROLLO (70%)*

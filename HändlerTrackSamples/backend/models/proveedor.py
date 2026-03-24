@@ -31,6 +31,7 @@ class Proveedor(Base):
     
     # Relaciones
     muestras = relationship("Sample", back_populates="proveedor")
+    anaqueles_asociados = relationship("AnaquelProveedor", back_populates="proveedor")
     
     def __repr__(self):
         return f"<Proveedor(nombre='{self.nombre}', nit='{self.nit}')>"

@@ -33,6 +33,7 @@ import {
   Warning as WarningIcon,
   Settings as SettingsIcon,
   Business as BusinessIcon,
+  Warehouse as WarehouseIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
@@ -70,11 +71,17 @@ const menuItems = [
     path: '/muestras',
     color: '#0288d1',
   },
-  { 
+  {
     text: 'Proveedores', 
     icon: <BusinessIcon />, 
     path: '/proveedores',
     color: '#7b1fa2',
+  },
+  { 
+    text: 'Almacén', 
+    icon: <WarehouseIcon />, 
+    path: '/almacen',
+    color: '#f57c00',
   },
   { 
     text: 'Cambiar Contraseña', 

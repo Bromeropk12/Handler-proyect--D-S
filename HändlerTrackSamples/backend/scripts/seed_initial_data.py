@@ -13,6 +13,9 @@ from database.database import SessionLocal, engine, Base
 from models.proveedor import Proveedor
 from models.clase_peligro import ClasePeligro
 from models.user import User
+from models.linea import Linea
+from models.anaquel import Anaquel
+from models.hilera import Hilera
 from security import get_password_hash
 
 
@@ -88,8 +91,108 @@ def create_initial_data():
                 db.add(clase)
                 print(f"   OK {clase_data['codigo']} - {clase_data['nombre']}")
         
-        # ============ Commit ============
+        # ============ Commit de clases ============
         db.commit()
+        
+        # ============ Líneas de Negocio ============
+        lineas_data = [
+            {"nombre": "Cosméticos", "descripcion": "Línea de negocio para productos cosméticos"},
+            {"nombre": "Industrial", "descripcion": "Línea de negocio para productos industriales"},
+            {"nombre": "Farmacéutico", "descripcion": "Línea de negocio para productos farmacéuticos"},
+        ]
+        
+        print("\nInsertando líneas de negocio...")
+        for linea_data in lineas_data:
+            existing = db.query(Linea).filter(Linea.nombre == linea_data["nombre"]).first()
+            if not existing:
+                linea = Linea(**linea_data)
+                db.add(linea)
+                print(f"   OK {linea_data['nombre']}")
+        
+        db.commit()
+        
+        # Obtener IDs de líneas
+        linea_cosmeticos = db.query(Linea).filter(Linea.nombre == "Cosméticos").first()
+        linea_industrial = db.query(Linea).filter(Linea.nombre == "Industrial").first()
+        linea_farmaceutico = db.query(Linea).filter(Linea.nombre == "Farmacéutico").first()
+        
+        # ============ 14 Anaqueles ============
+        anaqueles_data = [
+            # Cosméticos (5)
+            {"nombre": "COS-BASF-1", "linea_id": linea_cosmeticos.id, "proveedor_principal": "BASF"},
+            {"nombre": "COS-BASF-2", "linea_id": linea_cosmeticos.id, "proveedor_principal": "BASF"},
+            {"nombre": "COS-BASF-3", "linea_id": linea_cosmeticos.id, "proveedor_principal": "BASF"},
+            {"nombre": "COS-JRS-1", "linea_id": linea_cosmeticos.id, "proveedor_principal": "JRS"},
+            {"nombre": "COS-THOR-1", "linea_id": linea_cosmeticos.id, "proveedor_principal": "THOR"},
+            # Industria (3)
+            {"nombre": "IND-BASF-1", "linea_id": linea_industrial.id, "proveedor_principal": "BASF"},
+            {"nombre": "IND-BASF-THOR", "linea_id": linea_industrial.id, "proveedor_principal": "BASF & THOR"},
+            {"nombre": "IND-BULK", "linea_id": linea_industrial.id, "proveedor_principal": "BULK"},
+            # Farmacéutica (6)
+            {"nombre": "FAR-JRF-1", "linea_id": linea_farmaceutico.id, "proveedor_principal": "JRF"},
+            {"nombre": "FAR-JRF-2", "linea_id": linea_farmaceutico.id, "proveedor_principal": "JRF"},
+            {"nombre": "FAR-SUD-GIV", "linea_id": linea_farmaceutico.id, "proveedor_principal": "SUDEEP & GIVAUDAN"},
+            {"nombre": "FAR-BASF-1", "linea_id": linea_farmaceutico.id, "proveedor_principal": "BASF"},
+            {"nombre": "FAR-BASF-2", "linea_id": linea_farmaceutico.id, "proveedor_principal": "BASF"},
+            {"nombre": "FAR-MEGGLE-1", "linea_id": linea_farmaceutico.id, "proveedor_principal": "MEGGLE"},
+        ]
+        
+        print("\nInsertando 14 anaqueles...")
+        for anaquel_data in anaqueles_data:
+            existing = db.query(Anaquel).filter(Anaquel.nombre == anaquel_data["nombre"]).first()
+            if not existing:
+                anaquel = Anaquel(
+                    nombre=anaquel_data["nombre"],
+                    descripcion=f"Anaquel {anaquel_data['nombre']} - {anaquel_data['proveedor_principal']}",
+                    linea_id=anaquel_data["linea_id"],
+                    proveedor_principal=anaquel_data["proveedor_principal"],
+                    niveles=10,
+                    hileras_por_nivel=13,
+                    posiciones_por_hilera=9
+                )
+                db.add(anaquel)
+                print(f"   OK {anaquel_data['nombre']}")
+        
+        db.commit()
+        
+        # ============ 1820 Hileras (14 anaqueles x 10 niveles x 13 hileras) ============
+        print("\nInsertando hileras (1820 posiciones)...")
+        anaqueles = db.query(Anaquel).all()
+        hileras_creadas = 0
+        
+        for anaquel in anaqueles:
+            # Verificar si ya existen hileras para este anaquel
+            existing_hileras = db.query(Hilera).filter(Hilera.anaquel_id == anaquel.id).count()
+            if existing_hileras > 0:
+                print(f"   Anaquel {anaquel.nombre}: ya tiene {existing_hileras} hileras, saltando...")
+                continue
+            
+            for nivel in range(1, anaquel.niveles + 1):
+                for fila in range(1, anaquel.hileras_por_nivel + 1):
+                    # Determinar estado físico según el nivel
+                    # Niveles 1-4: líquido, 5-10: sólido
+                    estado_fisico = "líquido" if nivel <= 4 else "sólido"
+                    
+                    hilera = Hilera(
+                        anaquel_id=anaquel.id,
+                        nivel=nivel,
+                        fila=fila,
+                        posicion=1,  # Una posición por hilera (simplificado)
+                        capacidad_max=9,
+                        ancho_min=1,
+                        ancho_max=2,
+                        fondo_min=1,
+                        fondo_max=2,
+                        estado_fisico_sugerido=estado_fisico,
+                        estado="disponible"
+                    )
+                    db.add(hilera)
+                    hileras_creadas += 1
+            
+            print(f"   Anaquel {anaquel.nombre}: 130 hileras creadas")
+        
+        db.commit()
+        print(f"   Total hileras en BD: {db.query(Hilera).count()}")
         
         print("\nDatos iniciales insertados correctamente.")
         
@@ -97,6 +200,9 @@ def create_initial_data():
         print("\nResumen:")
         print(f"   Proveedores: {db.query(Proveedor).count()}")
         print(f"   Clases de Peligro: {db.query(ClasePeligro).count()}")
+        print(f"   Líneas: {db.query(Linea).count()}")
+        print(f"   Anaqueles: {db.query(Anaquel).count()}")
+        print(f"   Hileras: {db.query(Hilera).count()}")
         
     except Exception as e:
         db.rollback()

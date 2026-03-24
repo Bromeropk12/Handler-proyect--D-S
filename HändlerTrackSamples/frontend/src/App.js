@@ -11,6 +11,7 @@ import ChangePassword from './pages/ChangePassword';
 import Welcome from './pages/Welcome';
 import Muestras from './pages/Muestras';
 import Proveedores from './pages/Proveedores';
+import Almacen from './pages/Almacen';
 import Layout from './components/Layout';
 
 // Tema personalizado estilo Fluent Design (Windows 11)
@@ -121,6 +122,7 @@ function App() {
                       <Route path="/change-password" element={<ChangePassword />} />
                       <Route path="/muestras" element={<Muestras />} />
                       <Route path="/proveedores" element={<Proveedores />} />
+                      <Route path="/almacen" element={<Almacen />} />
                     </Routes>
                   </Layout>
                 </ProtectedRoute>
