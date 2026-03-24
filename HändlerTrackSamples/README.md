@@ -7,7 +7,7 @@ Aplicación de escritorio para la gestión y localización de muestras de materi
 ## Estado del Proyecto
 
 **Versión: 2.0 - EN DESARROLLO**  
-**Avance: ~45% Completado**
+**Avance: ~55% Completado**
 
 ### Funcionalidades Implementadas ✅
 
@@ -164,12 +164,12 @@ HändlerTrackSamples/
 │   │   ├── anaqueles.py          # ✅ API Anaqueles
 │   │   ├── hileras.py            # ✅ API Hileras
 │   │   └── anaquel_proveedor.py  # ✅ API Anaquel-Proveedor (RNF-2)
-│   ├── services/                  # ❌ No existe (pendiente)
-│   │   ├── dosificacion.py       # ❌ Pendiente (RNF-1)
-│   │   ├── fefo.py               # ❌ Pendiente
-│   │   ├── reubicacion.py        # ❌ Pendiente
-│   │   ├── compatibilidad.py     # ❌ Pendiente
-│   │   └── location_engine.py    # ❌ Pendiente
+│   ├── services/                  # ✅ Capa de negocio completa
+│   │   ├── hilera_service.py      # ✅ Completo
+│   │   ├── location_engine.py    # ✅ Completo
+│   │   ├── dosificacion.py       # ✅ Completo (RNF-1)
+│   │   ├── fefo.py               # ✅ Completo
+│   │   └── compatibilidad.py       # ✅ Completo (Matriz SGA/GHS)
 │   ├── security/                 # ✅ JWT Auth
 │   ├── database/                 # ✅ MySQL config
 │   └── alembic/                  # ✅ Migraciones
