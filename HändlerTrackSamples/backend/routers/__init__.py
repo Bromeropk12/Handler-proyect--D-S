@@ -9,6 +9,7 @@ from routers.lineas import router as lineas_router
 from routers.anaqueles import router as anaqueles_router
 from routers.hileras import router as hileras_router
 from routers.anaquel_proveedor import router as anaquel_proveedor_router
+from routers.movements import router as movements_router
 
 __all__ = [
     "proveedores_router",
@@ -18,4 +19,5 @@ __all__ = [
     "anaqueles_router",
     "hileras_router",
     "anaquel_proveedor_router",
+    "movements_router",
 ]

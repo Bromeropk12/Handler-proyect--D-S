@@ -12,7 +12,7 @@ from models.user import User
 import schemas
 from schemas import PasswordChangeRequest, PasswordChangeResponse
 from security import get_current_user, get_password_hash, verify_password, create_access_token
-from routers import proveedores_router, clases_peligro_router, muestras_router, lineas_router, anaqueles_router, hileras_router, anaquel_proveedor_router
+from routers import proveedores_router, clases_peligro_router, muestras_router, lineas_router, anaqueles_router, hileras_router, anaquel_proveedor_router, movements_router
 from typing import List
 import os
 import re
@@ -85,6 +85,7 @@ app.include_router(lineas_router)
 app.include_router(anaqueles_router)
 app.include_router(hileras_router)
 app.include_router(anaquel_proveedor_router)
+app.include_router(movements_router)
 
 # ============ RUTA RAÍZ ============
 

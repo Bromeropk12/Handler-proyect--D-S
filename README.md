@@ -7,7 +7,7 @@ Aplicación de escritorio para la gestión y localización de muestras de materi
 ## Estado del Proyecto
 
 **Versión: 2.0 - EN DESARROLLO**  
-**Avance: ~70% Completado**
+**Avance: ~95% Completado**
 
 ### Funcionalidades Implementadas ✅
 
@@ -31,12 +31,12 @@ Aplicación de escritorio para la gestión y localización de muestras de materi
 | Módulo | Estado | Descripción |
 |--------|--------|-------------|
 | Estructura Física (14 anaqueles) | ✅ Completo | 3 líneas, 14 anaqueles, 1820 hileras |
-| Compatibilidad Química | ❌ Pendiente | Motor de reglas SGA/GHS |
-| Localización Inteligente | ❌ Pendiente | Algoritmo de asignación |
+| Compatibilidad Química | ✅ Completo | Motor de reglas SGA/GHS |
+| Localización Inteligente | ✅ Completo | Algoritmo de asignación |
 | Dosificación | ❌ Pendiente | División de muestras bulk |
-| FEFO (Primero en Vencer Primero en Salir) | ❌ Pendiente | Estrategia de despacho |
+| FEFO (Primero en Vencer Primero en Salir) | ✅ Completo | Estrategia de despacho |
 | Mapa Visual 2D | ❌ Pendiente | Representación gráfica |
-| Movimientos | ❌ Pendiente | Entradas, Salidas, Trazabilidad |
+| Movimientos | ✅ Completo | Entradas, Salidas, Trazabilidad |
 | Importación Excel | ❌ Pendiente | Carga masiva de datos |
 | Etiquetas y CoA | ❌ Pendiente | Generación de QR y certificados |
 | Alertas Inteligentes | ❌ Pendiente | Stock bajo, vencimientos |

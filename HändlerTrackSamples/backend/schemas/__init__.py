@@ -386,3 +386,62 @@ class AsignarProveedoresRequest(BaseModel):
     """Schema para asignar múltiples proveedores a un anaquel"""
     anaquel_id: int = Field(..., description="ID del anaquel")
     proveedor_ids: List[int] = Field(..., description="Lista de IDs de proveedores")
+
+# ============ Esquemas de Movimiento ============
+
+class MovimientoBase(BaseModel):
+    """Schema base para movimiento"""
+    sample_id: int
+    tipo: str
+    cantidad_gramos: Decimal = Field(..., gt=0)
+    hilera_origen_id: Optional[int] = None
+    hilera_destino_id: Optional[int] = None
+    observaciones: Optional[str] = None
+    batch_id: Optional[str] = None
+
+class MovimientoCreate(MovimientoBase):
+    """Schema para crear movimiento"""
+    pass
+
+class MovimientoUpdate(BaseModel):
+    """Schema para actualizar movimiento"""
+    observaciones: Optional[str] = None
+    completado: Optional[bool] = None
+
+class Movimiento(MovimientoBase):
+    """Schema de respuesta de movimiento"""
+    id: int
+    usuario_id: int
+    completado: bool
+    fecha_movimiento: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class MovimientoWithRelations(Movimiento):
+    """Schema de movimiento con relaciones"""
+    sample: Optional[Sample] = None
+    usuario: Optional[User] = None
+
+# ============ Esquemas para Registro de Entrada ============
+
+class RegistroEntradaRequest(BaseModel):
+    """Schema para registrar entrada de muestra (CU-01)"""
+    sample_id: int = Field(..., description="ID de la muestra")
+    cantidad_gramos: Decimal = Field(..., gt=0, description="Cantidad a ingresar")
+    hilera_destino_id: Optional[int] = Field(None, description="ID de hilera destino (opcional)")
+    observaciones: Optional[str] = None
+
+class RegistroSalidaRequest(BaseModel):
+    """Schema para registrar salida de muestra (CU-02)"""
+    sample_id: int = Field(..., description="ID de la muestra")
+    cantidad_gramos: Decimal = Field(..., gt=0, description="Cantidad a despachar")
+    observaciones: Optional[str] = None
+
+class RegistroReubicacionRequest(BaseModel):
+    """Schema para registrar reubicación de muestra"""
+    sample_id: int = Field(..., description="ID de la muestra")
+    hilera_origen_id: int = Field(..., description="ID de hilera origen")
+    hilera_destino_id: int = Field(..., description="ID de hilera destino")
+    observaciones: Optional[str] = None

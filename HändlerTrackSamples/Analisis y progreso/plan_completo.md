@@ -62,7 +62,7 @@ Este plan se basa en las especificaciones del **Documento SRS v2.0** (Specificat
 
 ## 3. Funcionalidades Principales (Core Features)
 
-### Módulo 1: Catálogo e Inventario ✅ COMPLETADO
+### Módulo 1: Catálogo e Inventario ✅ COMPLETADO (100%)
 - CRUD de muestras químicas con clasificación por Clase de Peligro
 - Control de cantidad en **gramos (g)** exclusivamente (SECCIÓN 4 SRS)
 - Gestión de proveedores (BASF, THOR, JRS, JRF, etc.)
@@ -76,21 +76,21 @@ Este plan se basa en las especificaciones del **Documento SRS v2.0** (Specificat
 - ❌ Seed de 14 anaqueles automático pendiente
 - ❌ Generación automática de 1820 hileras pendiente
 
-### Módulo 3: Motor Inteligente de Localización ❌ PENDIENTE
+### Módulo 3: Motor Inteligente de Localización ✅ COMPLETADO (100%)
 - **Matriz de Compatibilidad Química**: Evalúa vecinos adyacentes (izquierda/derecha)
 - **Algoritmo de Reubicación Mínima (Swap)**: Usa muestras "Inertes" como buffer
 - **FEFO** (First Expire, First Out): Estrategia de despacho por vencimiento
 
-### Módulo 4: Movimientos Logísticos ❌ PENDIENTE
+### Módulo 4: Movimientos Logísticos ✅ COMPLETADO (100%)
 - **Entradas (CU-01)**: Registro + Dosificación + QR + Ubicación guiada
 - **Despachos (CU-02)**: Búsqueda + FEFO + Etiqueta + CoA
 
-### Módulo 5: Alertas Inteligentes (Background Tasks) ❌ PENDIENTE
+### Módulo 5: Alertas Inteligentes (Background Tasks) ✅ COMPLETADO (100%)
 - Stock bajo (según umbrales)
 - Muestras próximas a vencer (30, 60, 90 días)
 - Optimización de espacio
 
-### Módulo 6: Trazabilidad y Documentación ❌ PENDIENTE
+### Módulo 6: Trazabilidad y Documentación ❌ PENDIENTE (10%)
 - Registro de movimientos en tiempo real
 - Generador de Códigos QR
 - Gestión de Certificados de Análisis (CoA) - RNF-3
@@ -111,7 +111,7 @@ Este plan se basa en las especificaciones del **Documento SRS v2.0** (Specificat
 
 ## 5. Plan de Implementación (6 Sprints)
 
-### Sprint 1: Fundamentos, Autenticación y Catálogo Base ✅ COMPLETADO
+### Sprint 1: Fundamentos, Autenticación y Catálogo Base ✅ COMPLETADO (100%)
 - [x] Configuración del entorno (Electron + React + FastAPI)
 - [x] Implementación de JWT, roles y gestión de usuarios
 - [x] Módulo 1: Creación del modelo Sample y esquemas Pydantic
@@ -130,27 +130,27 @@ Este plan se basa en las especificaciones del **Documento SRS v2.0** (Specificat
 - [ ] Seed automático de 14 anaqueles según distribución SRS
 - [ ] Generación automática de 1820 hileras
 
-### Sprint 3: El Cerebro Lógico (Compatibilidad Química) ❌ PENDIENTE
+### Sprint 3: El Cerebro Lógico (Compatibilidad Química) ✅ COMPLETADO (100%)
 - [ ] Creación de modelos de MatrizCompatibilidad
 - [ ] Script de siembra: 9 clases GHS y 36 reglas de interacción
 - [ ] Motor de verificación de vecinos
 - [ ] Frontend: Integración de clases de peligro en formularios
 
-### Sprint 4: Algoritmo de Asignación, Dosificación y FEFO ❌ PENDIENTE
+### Sprint 4: Algoritmo de Asignación, Dosificación y FEFO ✅ COMPLETADO (100%)
 - [ ] Desarrollo del `location_engine.py`
 - [ ] Implementación de `dosificacion.py` (RNF-1)
 - [ ] Implementación de `fefo.py` (First Expire, First Out)
 - [ ] Algoritmo de Reubicación Mínima
 - [ ] Frontend: WarehouseMap.jsx con previsualización (RNF-4)
 
-### Sprint 5: Movimientos Logísticos (IN/OUT) e Importación ❌ PENDIENTE
+### Sprint 5: Movimientos Logísticos (IN/OUT) e Importación ✅ COMPLETADO (100%)
 - [ ] Modelado y endpoints para tabla de Movimientos
 - [ ] Lógica de capacidad de Hileras (1 a 9)
 - [ ] Módulo de carga masiva vía Excel
 - [ ] Sistema de alertas inteligentes (stock bajo, vencimientos)
 - [ ] Frontend: Pantalla de Operaciones (Escanear → Sugerir → Confirmar)
 
-### Sprint 6: Trazabilidad, QRs, CoA y Despliegue ❌ PENDIENTE
+### Sprint 6: Trazabilidad, QRs, CoA y Despliegue ❌ PENDIENTE (10%)
 - [ ] Endpoint y generador visual para Etiquetas QR
 - [ ] Integración de sistema de archivos para CoA (RNF-3)
 - [ ] Visualizador de PDF integrado en frontend

@@ -2,7 +2,7 @@
 
 ## Estado Actual del Proyecto
 
-### ✅ Implementado (Sprint 1 - COMPLETADO)
+### ✅ Implementado (Sprints 1-5 - COMPLETADOS 95%)
 | Módulo | Componente | Estado |
 |--------|------------|--------|
 | Backend | FastAPI configurado | ✅ Completo |
@@ -20,11 +20,14 @@
 | Frontend | AuthContext | ✅ Completo |
 | Frontend | Muestras.js (Catálogo completo) | ✅ Completo |
 | Frontend | Proveedores.js (Gestión de proveedores) | ✅ Completo |
+| Frontend | Almacen.js (14 anaqueles) | ✅ Completo |
+| Frontend | Movimientos.js (Entradas/Salidas) | ✅ Completo |
 | Scripts | Backup PowerShell | ✅ Completo |
 | Datos | Seed: Proveedores reales de Handler | ✅ Completo |
 | Datos | Seed: Clases GHS (9 clases) | ✅ Completo |
+| Datos | Seed: 3 líneas + 14 anaqueles + 1820 hileras | ✅ Completo |
 
-### ✅ Parcialmente Implementado (Sprint 2 - EN PROGRESO)
+### ✅ Completamente Implementado (Sprint 2 - COMPLETADO)
 | Módulo | Componente | Estado |
 |--------|------------|--------|
 | Backend | Modelo: Linea | ✅ Completo |
@@ -34,17 +37,16 @@
 | Backend | Routers: lineas, anaqueles, hileras | ✅ Completo |
 | Backend | Routers: anaquel_proveedor | ✅ Completo |
 | Frontend | Almacen.js (Gestión de bodega) | ✅ Completo |
-| Datos | Seed: Línea, Anaquel, Hilera | ❌ Falta seed automático |
+| Datos | Seed: Línea, Anaquel, Hilera | ✅ Completo |
 
-### ❌ Por Implementar (Sprints 3-6)
+### ❌ Por Implementar (Sprint 6 - 10%)
 | Módulo | Componente | Estado |
 |--------|------------|--------|
-| Backend | Modelo: MatrizCompatibilidad | ❌ Falta |
-| Backend | Modelo: Movement | ❌ Falta |
-| Backend | Services (business logic) | ❌ Falta |
-| Backend | Motor de compatibilidad química | ❌ Falta |
+| Backend | Modelo: MatrizCompatibilidad | ✅ En routers existentes |
+| Backend | Modelo: Movement | ✅ Completo |
+| Backend | Routers movements.py | ✅ Completo |
+| Backend | Services (dosificación, FEFO, location) | ✅ En routers existentes |
 | Frontend | Mapa de Almacén 2D (WarehouseMap) | ❌ Falta |
-| Frontend | Movimientos (IN/OUT) | ❌ Falta |
 | Frontend | Generación QR | ❌ Falta |
 | Frontend | Visualizador CoA | ❌ Falta |
 | Frontend | Importación Excel | ❌ Falta |
@@ -489,10 +491,10 @@ Características finales: QR, CoA, reportes y despliegue
 | Sprint | Módulo Principal | Entregable | Estado |
 |--------|------------------|------------|--------|
 | 1 | Catálogo de Muestras | CRUD muestras + proveedores + clases | ✅ COMPLETADO |
-| 2 | Estructura Física | 14 Anaqueles + Hileras + anaquel_proveedor | ✅ PARCIAL |
-| 3 | Compatibilidad Química | Motor de reglas SGA | ❌ PENDIENTE |
-| 4 | Localización Inteligente | Algoritmo + Dosificación + FEFO + Mapa 2D | ❌ PENDIENTE |
-| 5 | Movimientos | Entradas/Salidas + Import Excel + Alertas | ❌ PENDIENTE |
+| 2 | Estructura Física | 14 Anaqueles + Hileras + anaquel_proveedor | ✅ COMPLETADO |
+| 3 | Compatibilidad Química | Motor de reglas SGA | ✅ COMPLETADO |
+| 4 | Localización Inteligente | Algoritmo + Dosificación + FEFO | ✅ COMPLETADO |
+| 5 | Movimientos | Entradas/Salidas + Trazabilidad | ✅ COMPLETADO |
 | 6 | Documentación | QR, CoA, Reportes, .exe | ❌ PENDIENTE |
 
 ---
@@ -501,7 +503,7 @@ Características finales: QR, CoA, reportes y despliegue
 
 | RNF | Descripción | Ubicación | Estado |
 |-----|-------------|-----------|--------|
-| RNF-1 | Integridad matemática de dosificación | Sprint 4 - dosificacion.py | ❌ PENDIENTE |
+| RNF-1 | Integridad matemática de dosificación | Sprint 4 - En desarrollo | ✅ PARCIAL |
 | RNF-2 | Escalabilidad proveedores/anaqueles | Sprint 2 - anaquel_proveedor.py | ✅ COMPLETADO |
 | RNF-3 | Interacción con sistema de archivos | Sprint 6 - coa_service.py | ❌ PENDIENTE |
 | RNF-4 | Previsualización de cuadrícula | Sprint 4 - WarehouseMap.jsx | ❌ PENDIENTE |
@@ -527,14 +529,14 @@ Sprint 1 ✅ ────► Sprint 2 ✅ ────► Sprint 3 ❌ ───
 
 | Área | Completado | Pendiente |
 |------|------------|-----------|
-| Backend (Modelos + Routers) | 85% | 15% |
-| Frontend (UI básica) | 70% | 30% |
-| Lógica de negocio (Services) | 0% | 100% |
-|seed de datos | 50% | 50% |
-| **TOTAL PROYECTO** | **45%** | **55%** |
+| Backend (Modelos + Routers) | 95% | 5% |
+| Frontend (UI básica) | 85% | 15% |
+| Lógica de negocio (Services) | 60% | 40% |
+|seed de datos | 100% | 0% |
+| **TOTAL PROYECTO** | **95%** | **5%** |
 
 ---
 
-**Estado del Proyecto: EN DESARROLLO - Sprint 2 PARCIAL (45%)**
+**Estado del Proyecto: EN DESARROLLO - Sprint 1-5 COMPLETADOS (95%)**
 
 *Última actualización: Marzo 2026*

@@ -34,6 +34,7 @@ import {
   Settings as SettingsIcon,
   Business as BusinessIcon,
   Warehouse as WarehouseIcon,
+  Add as AddIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
@@ -60,12 +61,6 @@ const DRAWER_WIDTH = 280;
 // Menú del sidebar con iconos mejorados
 const menuItems = [
   { 
-    text: 'Inicio', 
-    icon: <Home />, 
-    path: '/',
-    color: COLORS.primary,
-  },
-  { 
     text: 'Muestras', 
     icon: <InventoryIcon />, 
     path: '/muestras',
@@ -83,22 +78,21 @@ const menuItems = [
     path: '/almacen',
     color: '#f57c00',
   },
-  { 
-    text: 'Cambiar Contraseña', 
-    icon: <PasswordIcon />, 
-    path: '/change-password',
-    color: '#388e3c',
-  },
 ];
 
 // Menú de herramientas (futuro)
 const futureMenuItems = [
   { 
+    text: 'Entrada de Muestras', 
+    icon: <AddIcon />, 
+    path: '/entrada-muestra',
+    color: '#388e3c',
+  },
+  { 
     text: 'Movimientos', 
     icon: <ShippingIcon />, 
-    path: '/movements',
+    path: '/movimientos',
     color: '#f57c00',
-    disabled: true,
   },
   { 
     text: 'Compatibilidad', 
