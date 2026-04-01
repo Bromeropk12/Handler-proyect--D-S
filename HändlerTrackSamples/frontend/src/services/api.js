@@ -116,3 +116,36 @@ export const muestrasAPI = {
   getDimensionesOptions: () => api.get('/muestras/options/dimensiones'),
   getEstadosOptions: () => api.get('/muestras/options/estados'),
 };
+
+export const ubicacionAPI = {
+  sugerir: (muestra_id, ignorar_compatibilidad = false) => 
+    api.post('/api/ubicacion/sugerir', { muestra_id, ignorar_compatibilidad }),
+  asignar: (muestra_id, hilera_id) => 
+    api.post('/api/ubicacion/asignar', { muestra_id, hilera_id }),
+  verificar: (muestra_id, hilera_id) => 
+    api.get(`/api/ubicacion/verificar/${muestra_id}/${hilera_id}`),
+  getMatriz: () => api.get('/api/ubicacion/compatibilidad/matriz'),
+  getIncompatibles: (clase_codigo) => 
+    api.get(`/api/ubicacion/compatibilidad/incompatibles/${clase_codigo}`),
+};
+
+export const dosificacionAPI = {
+  validar: (cantidad_total, unidades, gramos_por_unidad) => 
+    api.post('/api/dosificacion/validar', { cantidad_total, unidades, gramos_por_unidad }),
+  crearSubmuestras: (muestra_parent_id, unidades, gramos_por_unidad, observaciones) => 
+    api.post('/api/dosificacion/crear-submuestras', { 
+      muestra_parent_id, unidades, gramos_por_unidad, observaciones 
+    }),
+  getInfo: (muestra_id) => api.get(`/api/dosificacion/info/${muestra_id}`),
+  listarSubmuestras: (muestra_parent_id) => 
+    api.get(`/api/dosificacion/submuestras/${muestra_parent_id}`),
+  getContadorSubmuestras: (muestra_id) =>
+    api.get(`/api/dosificacion/contador-submuestras/${muestra_id}`),
+};
+
+export const fefoAPI = {
+  buscar: (params) => api.get('/api/fefo/buscar', { params }),
+  sugerir: (muestra_nombre, cantidad_gramos) => 
+    api.post('/api/fefo/sugerir', { muestra_nombre, cantidad_gramos }),
+  getProximasVencer: (dias) => api.get(`/api/fefo/proximas-vencer?dias=${dias}`),
+};

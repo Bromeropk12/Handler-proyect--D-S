@@ -6,8 +6,10 @@ import {
   Typography,
   Alert,
   CircularProgress,
+  Link,
 } from '@mui/material';
 import { keyframes } from '@mui/system';
+import { useNavigate } from 'react-router-dom';
 import { COLORS, loginBoxStyles } from '../constants/theme';
 
 // Animación de entrada
@@ -21,6 +23,12 @@ const fadeIn = keyframes`
  * Descripción: Formulario de autenticación de usuario
  */
 const LoginForm = ({ username, password, error, showError, loading, onUsernameChange, onPasswordChange, onSubmit, onDismissError }) => {
+  const navigate = useNavigate();
+
+  const handleResetPassword = () => {
+    navigate('/reset-password');
+  };
+
   return (
     <Box sx={loginBoxStyles}>
       {/* Logo */}
@@ -113,6 +121,25 @@ const LoginForm = ({ username, password, error, showError, loading, onUsernameCh
           {loading ? <CircularProgress size={24} color="inherit" /> : 'Iniciar Sesión'}
         </Button>
       </form>
+
+      {/* Enlace de recuperación de contraseña */}
+      <Box sx={{ textAlign: 'center', mt: 2 }}>
+        <Link
+          component="button"
+          type="button"
+          onClick={handleResetPassword}
+          sx={{
+            color: COLORS.red,
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            textDecoration: 'none',
+            cursor: 'pointer',
+            '&:hover': { textDecoration: 'underline' },
+          }}
+        >
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </Box>
 
       {/* Pie de formulario */}
       <Typography

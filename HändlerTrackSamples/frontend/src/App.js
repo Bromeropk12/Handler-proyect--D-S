@@ -8,13 +8,17 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 // Componentes - Solo los necesarios
 import Login from './pages/Login';
 import ChangePassword from './pages/ChangePassword';
-import Welcome from './pages/Welcome';
+import ResetPassword from './pages/ResetPassword';
 import Muestras from './pages/Muestras';
 import Proveedores from './pages/Proveedores';
 import Almacen from './pages/Almacen';
 import Movimientos from './pages/Movimientos';
 import EntradaMuestra from './pages/EntradaMuestra';
+import WarehouseMapComponent from './components/WarehouseMap';
+import DespachoMuestra from './pages/DespachoMuestra';
 import Layout from './components/Layout';
+import Alertas from './pages/Alertas';
+import Reportes from './pages/Reportes';
 
 // Tema personalizado estilo Fluent Design (Windows 11)
 const theme = createTheme({
@@ -113,20 +117,25 @@ function App() {
         <Router>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route 
               path="/*" 
               element={
                 <ProtectedRoute>
                   <Layout>
                     <Routes>
-                      <Route path="/" element={<Welcome />} />
-                      <Route path="/welcome" element={<Welcome />} />
+                      <Route path="/" element={<Muestras />} />
+                      <Route path="/welcome" element={<Muestras />} />
                       <Route path="/change-password" element={<ChangePassword />} />
                       <Route path="/muestras" element={<Muestras />} />
                       <Route path="/proveedores" element={<Proveedores />} />
                       <Route path="/almacen" element={<Almacen />} />
                       <Route path="/movimientos" element={<Movimientos />} />
                       <Route path="/entrada-muestra" element={<EntradaMuestra />} />
+                      <Route path="/despacho" element={<DespachoMuestra />} />
+                      <Route path="/almacen-mapa" element={<WarehouseMapComponent />} />
+                      <Route path="/alertas" element={<Alertas />} />
+                      <Route path="/reportes" element={<Reportes />} />
                     </Routes>
                   </Layout>
                 </ProtectedRoute>

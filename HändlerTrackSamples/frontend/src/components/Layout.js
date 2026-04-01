@@ -80,7 +80,7 @@ const menuItems = [
   },
 ];
 
-// Menú de herramientas (futuro)
+// Menú de herramientas (operaciones)
 const futureMenuItems = [
   { 
     text: 'Entrada de Muestras', 
@@ -89,24 +89,28 @@ const futureMenuItems = [
     color: '#388e3c',
   },
   { 
+    text: 'Despacho de Muestras', 
+    icon: <ShippingIcon />, 
+    path: '/despacho',
+    color: '#1976d2',
+  },
+  { 
     text: 'Movimientos', 
     icon: <ShippingIcon />, 
     path: '/movimientos',
     color: '#f57c00',
   },
   { 
-    text: 'Compatibilidad', 
-    icon: <ScienceIcon />, 
-    path: '/compatibility',
-    color: '#388e3c',
-    disabled: true,
-  },
-  { 
     text: 'Alertas', 
     icon: <WarningIcon />, 
-    path: '/alerts',
+    path: '/alertas',
     color: '#d32f2f',
-    disabled: true,
+  },
+  { 
+    text: 'Reportes', 
+    icon: <WarningIcon />, 
+    path: '/reportes',
+    color: '#0288d1',
   },
 ];
 

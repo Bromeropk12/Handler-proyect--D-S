@@ -7,7 +7,7 @@ Aplicación de escritorio para la gestión y localización de muestras de materi
 ## Estado del Proyecto
 
 **Versión: 2.0 - EN DESARROLLO**  
-**Avance: ~55% Completado**
+**Avance: ~85% Completado**
 
 ### Funcionalidades Implementadas ✅
 
@@ -23,24 +23,25 @@ Aplicación de escritorio para la gestión y localización de muestras de materi
 | **Catálogo de Muestras** | ✅ **Completo** | **CRUD completo con filtros, búsqueda y paginación** |
 | **Gestión de Proveedores** | ✅ **Completo** | **CRUD de proveedores con opciones** |
 | **Clases de Peligro GHS** | ✅ **Completo** | **Sistema de clasificación con seed de datos** |
-| **Gestión de Almacén** | ✅ **Parcial** | **3 líneas + Anaqueles + Hileras** |
+| **Gestión de Almacén** | ✅ **Completo** | **14 anaqueles + 1820 hileras** |
 | **RNF-2 (Anaquel-Proveedor)** | ✅ **Completo** | **Tabla relacional dinámica** |
+| **Seed 14 Anaqueles** | ✅ **Completo** | **Script automático de creación** |
+| **Ubicación Inteligente** | ✅ **Completo** | **Algoritmo de asignación con filtros** |
+| **Compatibilidad Química** | ✅ **Completo** | **Matriz GHS con verificación** |
+| **Dosificación (RNF-1)** | ✅ **Completo** | **Integridad matemática + QR** |
+| **FEFO** | ✅ **Completo** | **Estrategia de despacho** |
+| **WarehouseMap (RNF-4)** | ✅ **Completo** | **Visualización 2D de anaqueles** |
+| **Movimientos** | ✅ **Completo** | **Entradas, Salidas, Trazabilidad** |
+| **Entrada de Muestras** | ✅ **Completo** | **Flujo CU-01 completo** |
 
 ### Funcionalidades Pendientes ❌
 
 | Módulo | Estado | Descripción |
 |--------|--------|-------------|
-| Estructura Física (14 anaqueles) | ✅ Parcial | Modelos creados, seed automático pendiente |
-| Compatibilidad Química | ❌ Pendiente | Motor de reglas SGA/GHS |
-| Localización Inteligente | ❌ Pendiente | Algoritmo de asignación |
-| Dosificación | ❌ Pendiente | División de muestras bulk |
-| FEFO (Primero en Vencer Primero en Salir) | ❌ Pendiente | Estrategia de despacho |
-| Mapa Visual 2D | ❌ Pendiente | Representación gráfica |
-| Movimientos | ❌ Pendiente | Entradas, Salidas, Trazabilidad |
-| Importación Excel | ❌ Pendiente | Carga masiva de datos |
-| Etiquetas y CoA | ❌ Pendiente | Generación de QR y certificados |
+| Importación Excel | ❌ Pendiente | carga masiva de datos |
 | Alertas Inteligentes | ❌ Pendiente | Stock bajo, vencimientos |
 | Reportes | ❌ Pendiente | Exportación de informes |
+| Compilar .exe | ❌ Pendiente | Build final con electron-builder |
 
 ---
 

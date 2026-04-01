@@ -10,6 +10,12 @@ from routers.anaqueles import router as anaqueles_router
 from routers.hileras import router as hileras_router
 from routers.anaquel_proveedor import router as anaquel_proveedor_router
 from routers.movements import router as movements_router
+from routers.ubicacion import router as ubicacion_router
+from routers.dosificacion import router as dosificacion_router
+from routers.fefo import router as fefo_router
+from routers.alertas import router as alertas_router
+from routers.qr import router as qr_router
+from routers.reports import router as reports_router
 
 __all__ = [
     "proveedores_router",
@@ -20,4 +26,10 @@ __all__ = [
     "hileras_router",
     "anaquel_proveedor_router",
     "movements_router",
+    "ubicacion_router",
+    "dosificacion_router",
+    "fefo_router",
+    "alertas_router",
+    "qr_router",
+    "reports_router",
 ]

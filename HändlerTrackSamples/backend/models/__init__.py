@@ -10,6 +10,7 @@ from models.linea import Linea
 from models.anaquel import Anaquel
 from models.hilera import Hilera, EstadoHileraEnum
 from models.anaquel_proveedor import AnaquelProveedor
+from models.matriz_compatibilidad import MatrizCompatibilidad, NivelPeligroEnum
 
 __all__ = [
     "User",
@@ -24,4 +25,6 @@ __all__ = [
     "Hilera",
     "EstadoHileraEnum",
     "AnaquelProveedor",
+    "MatrizCompatibilidad",
+    "NivelPeligroEnum",
 ]

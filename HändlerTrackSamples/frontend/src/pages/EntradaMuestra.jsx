@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box, Typography, Card, CardContent, Stepper, Step, StepLabel,
   Button, TextField, Select, MenuItem, FormControl, InputLabel,
@@ -11,9 +11,9 @@ import {
   Add as AddIcon, Search as SearchIcon, Print as PrintIcon,
   PictureAsPdf as PdfIcon, Edit as EditIcon, CheckCircle as CheckIcon,
   ArrowForward as NextIcon, ArrowBack as BackIcon,
-  Inventory as InventoryIcon, Science as ScienceIcon
+  Inventory as InventoryIcon, Science as ScienceIcon, FolderOpen as FolderIcon
 } from '@mui/icons-material';
-import api from '../services/api';
+import api, { ubicacionAPI, dosificacionAPI } from '../services/api';
 
 const EntradaMuestra = () => {
   // Pasos del workflow
@@ -34,8 +34,8 @@ const EntradaMuestra = () => {
   // Datos del nuevo producto
   const [nuevoProducto, setNuevoProducto] = useState({
     nombre: '', cas_number: '', lote: '', proveedor_id: '',
-    cantidad_gramos: '', linea_negocio: '', clase_peligro_id: '',
-    dimension: '1x1', fecha_manufactura: '', fecha_vencimiento: '',
+    cantidad_gramos: 0, linea_negocio: 'cosméticos', clase_peligro_id: null,
+    dimension: '1x1', fecha_manufactura: null, fecha_vencimiento: null,
     estado_fisico: 'sólido'
   });
 
@@ -56,6 +56,7 @@ const EntradaMuestra = () => {
   // CoA
   const [coaPath, setCoaPath] = useState('');
   const [openCoADialog, setOpenCoADialog] = useState(false);
+  const fileInputRef = React.useRef(null);
 
   // Estados generales
   const [proveedores, setProveedores] = useState([]);
@@ -115,12 +116,40 @@ const EntradaMuestra = () => {
   const guardarProductoNuevo = async () => {
     try {
       setLoading(true);
-      const response = await api.post('/muestras/', nuevoProducto);
+      
+      // Formatear datos para el backend
+      const formatDate = (date) => {
+        if (!date) return null;
+        if (typeof date === 'string') {
+          if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            return date + 'T00:00:00';
+          }
+          return date;
+        }
+        return null;
+      };
+      
+      const productoData = {
+        ...nuevoProducto,
+        cantidad_gramos: nuevoProducto.cantidad_gramos === '' ? 0 : Number(nuevoProducto.cantidad_gramos),
+        linea_negocio: nuevoProducto.linea_negocio || 'cosméticos',
+        proveedor_id: nuevoProducto.proveedor_id || null,
+        clase_peligro_id: nuevoProducto.clase_peligro_id || null,
+        fecha_manufactura: formatDate(nuevoProducto.fecha_manufactura),
+        fecha_vencimiento: formatDate(nuevoProducto.fecha_vencimiento),
+      };
+      
+      const response = await api.post('/muestras/', productoData);
       setProductoSeleccionado(response.data);
       setSnackbar({ open: true, message: 'Producto creado exitosamente', severity: 'success' });
       return response.data;
     } catch (error) {
-      setSnackbar({ open: true, message: error.response?.data?.detail || 'Error al crear producto', severity: 'error' });
+      const errorMessage = error.response?.data?.detail 
+        ? (typeof error.response.data.detail === 'string' 
+            ? error.response.data.detail 
+            : JSON.stringify(error.response.data.detail))
+        : 'Error al crear producto';
+      setSnackbar({ open: true, message: errorMessage, severity: 'error' });
       return null;
     } finally {
       setLoading(false);
@@ -187,14 +216,30 @@ const EntradaMuestra = () => {
     printWindow.print();
   };
 
-  // Seleccionar archivo CoA (simulado - en producción usaría Electron dialog)
-  const seleccionarCoA = () => {
-    // En una aplicación real, esto usaría el diálogo nativo de Electron
-    // Por ahora simulamos con un prompt
-    const path = prompt('Ingrese la ruta del archivo CoA (PDF):');
+  // Seleccionar archivo CoA usando campo de texto
+  const handleCoAChange = (e) => {
+    const path = e.target.value;
+    setCoaPath(path);
     if (path) {
-      setCoaPath(path);
       setSnackbar({ open: true, message: 'Certificado CoA vinculado correctamente', severity: 'success' });
+    }
+  };
+
+  // Seleccionar archivo CoA mediante explorador de archivos
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // En Windows, podemos obtener la ruta del archivo
+      const filePath = file.path || file.name;
+      setCoaPath(filePath);
+      setSnackbar({ open: true, message: `Certificado CoA seleccionado: ${file.name}`, severity: 'success' });
+    }
+  };
+
+  // Abrir explorador de archivos
+  const openFileDialog = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
@@ -350,12 +395,14 @@ const EntradaMuestra = () => {
                 <FormControl fullWidth>
                   <InputLabel>Clase de Peligro</InputLabel>
                   <Select
-                    value={nuevoProducto.clase_peligro_id}
+                    value={nuevoProducto.clase_peligro_id || ''}
                     label="Clase de Peligro"
-                    onChange={(e) => setNuevoProducto({...nuevoProducto, clase_peligro_id: e.target.value})}
+                    onChange={(e) => setNuevoProducto({...nuevoProducto, clase_peligro_id: e.target.value || null})}
                   >
                     {clasesPeligro.map(c => (
-                      <MenuItem key={c.id} value={c.id}>{c.codigo} - {c.nombre}</MenuItem>
+                      <MenuItem key={c.id} value={c.id}>
+                        {c.codigo === 'GHS00' ? 'No peligroso' : `${c.codigo} - ${c.nombre}`}
+                      </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
@@ -582,7 +629,7 @@ const EntradaMuestra = () => {
                 <Typography variant="h6" color="success.main">
                   Certificado Vinculado
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, wordBreak: 'break-all' }}>
                   {coaPath}
                 </Typography>
                 <Button
@@ -600,14 +647,42 @@ const EntradaMuestra = () => {
                 <Typography variant="h6" gutterBottom>
                   No hay certificado vinculado
                 </Typography>
+                
+                {/* Input file oculto */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept=".pdf"
+                  style={{ display: 'none' }}
+                  onChange={handleFileSelect}
+                />
+                
+                {/* Botón para seleccionar archivo */}
                 <Button
                   variant="contained"
-                  startIcon={<PdfIcon />}
-                  onClick={seleccionarCoA}
+                  startIcon={<FolderIcon />}
+                  onClick={openFileDialog}
                   sx={{ mt: 2 }}
                 >
-                  Seleccionar Archivo CoA
+                  Seleccionar Archivo PDF
                 </Button>
+                
+                <Divider sx={{ my: 2 }} />
+                
+                <Typography variant="caption" color="text.secondary">
+                  O ingrese la ruta manualmente:
+                </Typography>
+                <TextField
+                  fullWidth
+                  label="Ruta del archivo CoA (PDF)"
+                  placeholder="C:\Documentos\coa\archivo.pdf"
+                  value={coaPath}
+                  onChange={handleCoAChange}
+                  sx={{ mt: 1 }}
+                />
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                  Ejemplo: C:\Archivos\CoA\certificado.pdf
+                </Typography>
               </Box>
             )}
           </Card>

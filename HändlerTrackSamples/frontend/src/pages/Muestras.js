@@ -16,7 +16,7 @@ import {
   Visibility as ViewIcon, Delete as DeleteIcon, Refresh as RefreshIcon,
   Inventory2 as SampleIcon
 } from '@mui/icons-material';
-import { muestrasAPI, proveedoresAPI, clasesPeligroAPI } from '../services/api';
+import { muestrasAPI, proveedoresAPI, clasesPeligroAPI, dosificacionAPI } from '../services/api';
 
 const Muestras = () => {
   // Estados
@@ -25,6 +25,7 @@ const Muestras = () => {
   const [totalMuestras, setTotalMuestras] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [contadoresSubmuestras, setContadoresSubmuestras] = useState({});
   
   // Filtros
   const [search, setSearch] = useState('');
@@ -86,8 +87,19 @@ const Muestras = () => {
       };
       const response = await muestrasAPI.getAll(params);
       setMuestras(response.data);
-      // El total real vendría del backend con paginación completa
       setTotalMuestras(response.data.length);
+      
+      // Cargar contadores de sub-muestras
+      const contadores = {};
+      for (const m of response.data) {
+        try {
+          const res = await dosificacionAPI.getContadorSubmuestras(m.id);
+          contadores[m.id] = res.data.total_submuestras || 0;
+        } catch (e) {
+          contadores[m.id] = 0;
+        }
+      }
+      setContadoresSubmuestras(contadores);
     } catch (error) {
       console.error('Error cargando muestras:', error);
       showSnackbar('Error al cargar muestras', 'error');
@@ -163,10 +175,34 @@ const Muestras = () => {
     setSaving(true);
     try {
       // Convertir cantidad_gramos a número antes de guardar
+      // Y formatear fechas correctamente
+      const formatDate = (date) => {
+        if (!date) return null;
+        if (date instanceof Date) return date.toISOString();
+        if (typeof date === 'string') {
+          // Si es formato YYYY-MM-DD, agregar tiempo
+          if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            return date + 'T00:00:00';
+          }
+          return date;
+        }
+        return null;
+      };
+
       const dataToSave = {
         ...muestraActual,
-        cantidad_gramos: muestraActual.cantidad_gramos === '' ? 0 : Number(muestraActual.cantidad_gramos)
+        cantidad_gramos: muestraActual.cantidad_gramos === '' ? 0 : Number(muestraActual.cantidad_gramos),
+        fecha_manufactura: formatDate(muestraActual.fecha_manufactura),
+        fecha_vencimiento: formatDate(muestraActual.fecha_vencimiento),
+        // Limpiar campos opcionales vacíos
+        proveedor_id: muestraActual.proveedor_id || null,
+        clase_peligro_id: muestraActual.clase_peligro_id || null,
       };
+      
+      // Eliminar campos que no deberían enviarse vacíos como strings
+      delete dataToSave.created_at;
+      delete dataToSave.updated_at;
+      delete dataToSave.fecha_ingreso;
       
       if (modoEdicion) {
         await muestrasAPI.update(muestraActual.id, dataToSave);
@@ -179,7 +215,12 @@ const Muestras = () => {
       loadMuestras();
     } catch (error) {
       console.error('Error guardando muestra:', error);
-      showSnackbar(error.response?.data?.detail || 'Error al guardar muestra', 'error');
+      const errorMessage = error.response?.data?.detail 
+        ? (typeof error.response.data.detail === 'string' 
+            ? error.response.data.detail 
+            : JSON.stringify(error.response.data.detail))
+        : 'Error al guardar muestra';
+      showSnackbar(errorMessage, 'error');
     } finally {
       setSaving(false);
     }
@@ -211,8 +252,29 @@ const Muestras = () => {
 
   // Obtener clase de peligro
   const getClasePeligroNombre = (id) => {
+    if (!id || id === '' || id === null) {
+      return 'Sin asignar';
+    }
     const clase = clasesPeligro.find(c => c.id === id);
-    return clase ? `${clase.codigo} - ${clase.nombre}` : '-';
+    if (clase) {
+      if (clase.codigo === 'GHS00') {
+        return 'No peligroso';
+      }
+      return `${clase.codigo} - ${clase.nombre}`;
+    }
+    return 'Sin asignar';
+  };
+
+  // Obtener color de clase de peligro para el badge
+  const getClasePeligroColor = (id) => {
+    if (!id || id === '' || id === null) {
+      return 'default'; // Gris para "Sin asignar"
+    }
+    const clase = clasesPeligro.find(c => c.id === id);
+    if (clase && clase.codigo === 'GHS00') {
+      return 'success'; // Verde para No peligroso
+    }
+    return 'warning'; // Naranja para clases peligrosas
   };
 
   // Color de estado
@@ -336,8 +398,9 @@ const Muestras = () => {
                   <TableCell>Lote</TableCell>
                   <TableCell>Proveedor</TableCell>
                   <TableCell>Línea</TableCell>
-                  <TableCell>Cantidad</TableCell>
-                  <TableCell>Clase Peligro</TableCell>
+<TableCell>Cantidad</TableCell>
+                    <TableCell>Disp.</TableCell>
+                    <TableCell>Clase Peligro</TableCell>
                   <TableCell>Estado</TableCell>
                   <TableCell align="right">Acciones</TableCell>
                 </TableRow>
@@ -358,8 +421,34 @@ const Muestras = () => {
                         variant="outlined"
                       />
                     </TableCell>
-                    <TableCell>{Number(muestra.cantidad_gramos).toFixed(2)} g</TableCell>
-                    <TableCell>{getClasePeligroNombre(muestra.clase_peligro_id)}</TableCell>
+                    <TableCell>
+                      {Number(muestra.cantidad_gramos).toFixed(2)} g
+                      {muestra.dimension && (
+                        <Typography variant="caption" display="block" color="text.secondary">
+                          {muestra.dimension}
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {contadoresSubmuestras[muestra.id] > 0 ? (
+                        <Chip 
+                          label={`${contadoresSubmuestras[muestra.id]} uds`} 
+                          size="small" 
+                          color="success" 
+                          variant="outlined"
+                        />
+                      ) : (
+                        <Typography variant="body2" color="text.disabled">-</Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={getClasePeligroNombre(muestra.clase_peligro_id)} 
+                        size="small" 
+                        color={getClasePeligroColor(muestra.clase_peligro_id)}
+                        variant="outlined"
+                      />
+                    </TableCell>
                     <TableCell>
                       <Chip 
                         label={muestra.estado} 
@@ -493,9 +582,10 @@ const Muestras = () => {
                   onChange={handleInputChange('clase_peligro_id')}
                   label="Clase de Peligro"
                 >
-                  <MenuItem value="">Seleccionar...</MenuItem>
                   {clasesPeligro.map(clase => (
-                    <MenuItem key={clase.id} value={clase.id}>{clase.codigo} - {clase.nombre}</MenuItem>
+                    <MenuItem key={clase.id} value={clase.id}>
+                      {clase.codigo === 'GHS00' ? 'No peligroso' : `${clase.codigo} - ${clase.nombre}`}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>

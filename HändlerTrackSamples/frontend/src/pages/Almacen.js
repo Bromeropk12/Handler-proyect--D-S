@@ -27,6 +27,7 @@ const Almacen = () => {
   const [activeTab, setActiveTab] = useState('lineas');
   const [selectedLinea, setSelectedLinea] = useState(null);
   const [selectedAnaquel, setSelectedAnaquel] = useState(null);
+  const [lineaLocked, setLineaLocked] = useState(false);
   
   // Modal states
   const [openLineaModal, setOpenLineaModal] = useState(false);
@@ -306,7 +307,7 @@ const Almacen = () => {
                     transition: '0.2s',
                     '&:hover': { transform: 'translateY(-2px)', boxShadow: 4 }
                   }}
-                  onClick={() => { setSelectedLinea(linea); setActiveTab('anaqueles'); }}
+                  onClick={() => { setSelectedLinea(linea); setActiveTab('anaqueles'); setLineaLocked(true); }}
                   >
                     <CardContent>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -354,12 +355,28 @@ const Almacen = () => {
       {activeTab === 'anaqueles' && (
         <>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              {lineas.map((linea) => (
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              {lineaLocked && selectedLinea && (
+                <>
+                  <Chip
+                    label={selectedLinea.nombre}
+                    color="primary"
+                    variant="filled"
+                  />
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => { setSelectedLinea(null); setLineaLocked(false); setActiveTab('lineas'); }}
+                  >
+                    Cambiar Línea
+                  </Button>
+                </>
+              )}
+              {!lineaLocked && lineas.map((linea) => (
                 <Chip
                   key={linea.id}
                   label={linea.nombre}
-                  onClick={() => setSelectedLinea(selectedLinea?.id === linea.id ? null : linea)}
+                  onClick={() => { setSelectedLinea(linea); setLineaLocked(true); }}
                   color={selectedLinea?.id === linea.id ? 'primary' : 'default'}
                   variant={selectedLinea?.id === linea.id ? 'filled' : 'outlined'}
                 />
@@ -527,18 +544,24 @@ const Almacen = () => {
             multiline
             rows={2}
           />
-          <FormControl fullWidth margin="normal">
+          <FormControl fullWidth margin="normal" disabled={!!editingAnaquel}>
             <InputLabel>Línea de Negocio</InputLabel>
             <Select
               value={anaquelForm.linea_id}
               onChange={(e) => setAnaquelForm({ ...anaquelForm, linea_id: e.target.value })}
               label="Línea de Negocio"
+              disabled={!!editingAnaquel}
             >
               {lineas.map((linea) => (
                 <MenuItem key={linea.id} value={linea.id}>{linea.nombre}</MenuItem>
               ))}
             </Select>
           </FormControl>
+          {editingAnaquel && (
+            <Typography variant="caption" color="error">
+              La línea de negocio no se puede cambiar una vez creado el anaquel
+            </Typography>
+          )}
           <TextField
             fullWidth
             label="Proveedor Principal"
