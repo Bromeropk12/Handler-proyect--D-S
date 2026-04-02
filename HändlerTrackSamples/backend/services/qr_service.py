@@ -34,10 +34,11 @@ class QRService:
         """
         try:
             import qrcode
+            from PIL import Image
 
             qr = qrcode.QRCode(
-                version=1,
-                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                version=None,
+                error_correction=qrcode.ERROR_CORRECT_L,
                 box_size=10,
                 border=4,
             )
@@ -46,17 +47,25 @@ class QRService:
 
             img = qr.make_image(fill_color="black", back_color="white")
 
-            # Convertir a bytes
+            if size != 200:
+                img = img.resize((size, size), Image.Resampling.LANCZOS)
+
             buffer = io.BytesIO()
             img.save(buffer, format="PNG")
             buffer.seek(0)
 
-            # Convertir a base64
             img_base64 = base64.b64encode(buffer.getvalue()).decode()
             return f"data:image/png;base64,{img_base64}"
 
-        except ImportError:
-            # Si no hay qrcode instalado, retornar placeholder
+        except ImportError as e:
+            import logging
+
+            logging.getLogger(__name__).error(f"Error de importación generando QR: {e}")
+            return ""
+        except Exception as e:
+            import logging
+
+            logging.getLogger(__name__).error(f"Error generando QR: {e}")
             return ""
 
     @staticmethod

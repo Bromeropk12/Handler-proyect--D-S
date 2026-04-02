@@ -16,6 +16,9 @@ from routers.fefo import router as fefo_router
 from routers.alertas import router as alertas_router
 from routers.qr import router as qr_router
 from routers.reports import router as reports_router
+from routers.organizacion import router as organizacion_router
+from routers.import_excel import router as import_router
+from routers.coa import router as coa_router
 
 __all__ = [
     "proveedores_router",
@@ -32,4 +35,7 @@ __all__ = [
     "alertas_router",
     "qr_router",
     "reports_router",
+    "organizacion_router",
+    "import_router",
+    "coa_router",
 ]

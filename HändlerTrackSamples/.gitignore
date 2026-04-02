@@ -1,6 +1,8 @@
 # ==========================================
-# HÄNDLER TRACKSAMPLES - .GITIGNORE
+# HÄNDLER TRACKSAMPLES - .GITIGNORE v2.0
 # Proyecto: Gestión de Muestras de Materias Primas
+# Sistema WMS completo con motor de organización automática
+# Actualizado: Abril 2026
 # ==========================================
 
 # ==================
@@ -56,7 +58,7 @@ cover/
 venv/
 ENV/
 env/
-.venv
+.venv/
 
 # pip log
 pip-log.txt
@@ -86,7 +88,12 @@ Cython/
 
 # Environments
 .env
-.venv
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+.venv/
 env/
 venv/
 ENV/
@@ -110,6 +117,22 @@ dmypy.json
 
 # pyright
 .pyright/
+
+# Alembic
+alembic/versions/__pycache__/
+alembic/__pycache__/
+
+# Application logs
+app.log
+*.log
+logs/
+
+# Database files (for development - production uses external DB)
+*.db
+*.sqlite
+*.sqlite3
+db.sqlite
+db.sqlite3
 
 # ==================
 # NODE.JS / FRONTEND
@@ -211,6 +234,14 @@ test.db
 # Electron-builder
 dist-electron/
 release/
+dist/
+build/Release/
+out/
+electron-builder-effective-config.yaml
+
+# Electron development
+.electron/
+electron-builder-effective-config.yaml
 
 # ==================
 # IDEs & EDITORS
@@ -224,6 +255,10 @@ release/
 !.vscode/extensions.json
 *.code-workspace
 .history/
+.vscode-test/
+
+# Project specific VS Code user settings
+.vscode/settings.json.user
 
 # JetBrains
 .idea/
@@ -372,6 +407,18 @@ backup_*/
 *_backup/
 *_backups/
 
+# Database backups
+*.sql
+*.mysqldump
+*.dump
+*.psql
+backup_*.sql
+*_backup.sql
+
+# Application backups
+certificados/backup/
+scripts/backup_*/
+
 # ==================
 # BUILD OUTPUTS
 # ==================
@@ -400,45 +447,66 @@ docs/_build/
 site/
 
 # ==================
-# SPECIFIC PROJECT
+# PROJECT SPECIFIC - HÄNDLER TRACKSAMPLES
 # ==================
 
-# Audio files (if any)
+# Certificate files (CoA documents)
+certificados/
+*.pdf
+!backend/scripts/plantilla_importacion.xlsx
+!README.md
+
+# Excel files (except templates)
+*.xlsx
+*.xls
+!backend/scripts/plantilla_importacion.xlsx
+
+# Images (except app icons and logos)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+!public/logo.png
+!public/Logo-Handler.png
+!public/favicon.png
+!public/icon.ico
+!frontend/public/logo.png
+!frontend/public/Logo-Handler.png
+!frontend/public/favicon.png
+!frontend/public/icon.ico
+
+# Media files
 *.mp3
 *.wav
 *.flac
 *.ogg
-
-# Video files
 *.mp4
 *.avi
 *.mkv
 *.mov
 
-# PDF files (except templates)
-*.pdf
-!Plantilla_Final.pdf
-!*.pdf.example
-
-# Excel templates (keep only source)
-*.xlsx
-!backend/scripts/plantilla_importacion.xlsx
-
-# Images
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.svg
-*.ico
-*.webp
-
-# Fonts
+# Font files
 *.ttf
 *.otf
 *.eot
 *.woff
 *.woff2
+
+# Database initialization scripts (keep source, ignore generated)
+scripts/*.sql
+!scripts/fix_muestras_columns.sql
+
+# Development database files
+*.db
+*.sqlite
+*.sqlite3
+test.db
+dev.db
+
+# Temporary files created by scripts
+scripts/temp/
+scripts/tmp/
 
 # ==================
 # EXCEPTIONS (RE-INCLUDE)
@@ -452,8 +520,12 @@ site/
 # Keep GitHub workflows
 !.github/
 
-# Keep some config files
+# Keep documentation
 !*.md
+!README.md
+!docs/**/*.md
+
+# Keep configuration files
 !*.json
 !*.toml
 !*.yaml
@@ -461,6 +533,9 @@ site/
 !*.ini
 !*.conf
 !*.txt
+!requirements.txt
+!package.json
+!package-lock.json
 
 # Keep source code
 !/**/*.py
@@ -472,6 +547,84 @@ site/
 !/**/*.html
 !/**/*.css
 !/**/*.scss
+
+# Keep build configurations
+!electron-builder.json
+!webpack.config.js
+!babel.config.js
+!tsconfig.json
+
+# Keep VS Code project settings
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Keep Alembic configuration
+!alembic.ini
+!alembic/env.py
+!alembic/script.py.mako
+!alembic/versions/*.py
+
+# Keep important scripts
+!scripts/*.py
+!scripts/*.ps1
+!scripts/*.bat
+!start_all.bat
+
+# ==================
+# ADDITIONAL PATTERNS
+# ==================
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+Thumbs.db
+$RECYCLE.BIN/
+
+# IDE and editor files
+*.swp
+*.swo
+*~
+Session.vim
+.netrwhist
+.history/
+.ionide/
+.project
+.settings/
+.vscode/settings.json.user
+.vscode/launch.json.user
+
+# Package managers
+.yarn-integrity
+.npm
+.npmrc
+.yarnrc
+.pnpm-debug.log*
+
+# Testing
+.nyc_output
+coverage/
+.coverage
+.pytest_cache/
+.tox/
+.cache
+nosetests.xml
+coverage.xml
+
+# Docker
+Dockerfile.*
+docker-compose.*.yml
+.dockerignore
+
+# CI/CD
+.github/workflows/*.yml.user
+.circleci/config.yml.user
 
 # ==================
 # GITATTRIBUTES
@@ -493,7 +646,27 @@ site/
 *.dll binary
 *.so binary
 *.dylib binary
+*.zip binary
+*.tar.gz binary
+*.7z binary
 
 # ==================
 # END OF .GITIGNORE
 # ==================
+#
+# Este archivo .gitignore está optimizado para el proyecto
+# Händler TrackSamples - Sistema de Gestión de Almacén WMS
+#
+# Incluye patrones para:
+# - Python (backend FastAPI)
+# - Node.js/Electron (frontend)
+# - Bases de datos MySQL/SQLite
+# - Archivos de configuración sensibles
+# - Cache y archivos temporales
+# - Artefactos de compilación
+# - IDEs y editores
+# - Sistemas operativos
+# - Archivos específicos del proyecto
+#
+# Última actualización: Abril 2026
+# Versión: 2.0

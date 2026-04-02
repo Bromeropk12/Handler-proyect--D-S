@@ -11,12 +11,16 @@ import {
 } from '@mui/material';
 import { Print, Download, Close } from '@mui/icons-material';
 
-const EtiquetaPreview = ({ 
-  open = false, 
-  onClose, 
+const EtiquetaPreview = ({
+  open = false,
+  onClose,
   etiqueta = null,
-  showActions = true 
+  showActions = true
 }) => {
+  console.log('EtiquetaPreview render - etiqueta:', etiqueta);
+  console.log('QR image present:', etiqueta?.qr_image ? 'YES' : 'NO');
+  console.log('QR image length:', etiqueta?.qr_image?.length || 0);
+
   if (!etiqueta) return null;
 
   const handlePrint = () => {

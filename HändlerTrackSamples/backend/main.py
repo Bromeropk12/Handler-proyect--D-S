@@ -37,6 +37,9 @@ from routers import (
     alertas_router,
     qr_router,
     reports_router,
+    organizacion_router,
+    import_router,
+    coa_router,
 )
 from typing import List
 import os
@@ -120,6 +123,9 @@ app.include_router(fefo_router)
 app.include_router(alertas_router)
 app.include_router(qr_router)
 app.include_router(reports_router)
+app.include_router(organizacion_router)
+app.include_router(import_router)
+app.include_router(coa_router)
 
 # ============ RUTA RAÍZ ============
 

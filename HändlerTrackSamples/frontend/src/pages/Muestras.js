@@ -233,18 +233,35 @@ const Muestras = () => {
   const handleGenerarEtiqueta = async (muestra) => {
     setGenerandoEtiqueta(true);
     try {
-      const response = await api.post('/api/qr/generar-etiqueta', {
+      console.log('Generando etiqueta para muestra:', muestra.id, muestra.nombre);
+      const payload = {
         muestra_id: muestra.id,
         nombre: muestra.nombre,
         lote: muestra.lote,
         cantidad: muestra.cantidad_gramos,
         proveedor: getProveedorNombre(muestra.proveedor_id),
         fecha_vencimiento: muestra.fecha_vencimiento
-      });
-      setEtiquetaData(response.data.etiqueta);
-      setOpenEtiqueta(true);
+      };
+      console.log('Payload enviado:', payload);
+
+      const response = await api.post('/api/qr/generar-etiqueta', payload);
+      console.log('Respuesta completa:', response);
+      console.log('Respuesta data:', response.data);
+
+      if (response.data && response.data.etiqueta) {
+        console.log('Etiqueta data:', response.data.etiqueta);
+        console.log('QR image length:', response.data.etiqueta.qr_image ? response.data.etiqueta.qr_image.length : 'UNDEFINED');
+        console.log('Setting etiquetaData to:', response.data.etiqueta);
+        setEtiquetaData(response.data.etiqueta);
+        console.log('Opening etiqueta dialog...');
+        setOpenEtiqueta(true);
+      } else {
+        console.error('Respuesta sin etiqueta:', response.data);
+        showSnackbar('Error: Respuesta sin datos de etiqueta', 'error');
+      }
     } catch (error) {
       console.error('Error generando etiqueta:', error);
+      console.error('Error details:', error.response?.data);
       showSnackbar('Error al generar etiqueta', 'error');
     } finally {
       setGenerandoEtiqueta(false);
