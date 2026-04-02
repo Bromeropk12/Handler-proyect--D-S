@@ -340,6 +340,7 @@ class LocationEngine:
     def calcular_reubicacion(db: Session, muestra_conflicto_id: int) -> Dict[str, Any]:
         """
         Calcula las opciones de reubicación para una muestra.
+        Delega al ReubicacionService para el análisis completo.
 
         Args:
             db: Sesión de base de datos
@@ -348,10 +349,31 @@ class LocationEngine:
         Returns:
             Diccionario con opciones de reubicación
         """
-        # Esta implementación se completará en el Sprint 4
-        # Por ahora retorna un mensaje informativo
+        from services.reubicacion import ReubicacionService
+
+        muestra = db.query(Sample).filter(Sample.id == muestra_conflicto_id).first()
+        if not muestra:
+            return {"success": False, "error": "Muestra no encontrada"}
+
+        dimension = muestra.dimension or "1x1"
+
+        # Usar el algoritmo de reubicación mínima
+        resultado = ReubicacionService.calcular_movimientos_necesarios(
+            db, muestra_conflicto_id, dimension
+        )
+
         return {
-            "success": True,
-            "mensaje": "Algoritmo de reubicación en desarrollo",
-            "sprint": 4,
+            "success": resultado.get("success", False),
+            "muestra": {
+                "id": muestra.id,
+                "nombre": muestra.nombre,
+                "dimension": dimension,
+                "clase_peligro": muestra.clase_peligro.codigo
+                if muestra.clase_peligro
+                else None,
+            },
+            "opciones": resultado.get("opciones", []),
+            "tipo": resultado.get("tipo", "sin_opciones"),
+            "movimientos": resultado.get("movimientos", -1),
+            "mensaje": resultado.get("mensaje", resultado.get("error", "")),
         }

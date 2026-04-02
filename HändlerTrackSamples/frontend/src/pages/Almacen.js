@@ -1,6 +1,7 @@
 /**
  * Página de Almacén - Gestión de estructura física
  * Muestra líneas de negocio, anaqueles y hileras del almacén
+ * Incluye vista interactiva de hileras con código de colores GHS
  */
 
 import React, { useState, useEffect } from 'react';
@@ -9,15 +10,19 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, TextField, Dialog, DialogTitle, DialogContent, DialogActions,
   FormControl, InputLabel, Select, MenuItem, Alert, LinearProgress,
-  List, ListItemText, Checkbox
+  List, ListItemText, Checkbox, Tabs, Tab, CardHeader, CardActions,
+  CircularProgress, Divider
 } from '@mui/material';
 import {
   Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon,
   Refresh as RefreshIcon, Inventory as InventoryIcon,
   GridView as GridViewIcon, TableChart as TableChartIcon,
-  ViewList as ViewListIcon, Groups as GroupsIcon
+  ViewList as ViewListIcon, Groups as GroupsIcon,
+  AutoFixHigh as OrganizeIcon, Analytics as AnalyticsIcon,
+  Warning as WarningIcon, CheckCircle as OkIcon
 } from '@mui/icons-material';
 import api from '../services/api';
+import HileraGrid from '../components/HileraGrid';
 
 const Almacen = () => {
   const [loading, setLoading] = useState(true);
@@ -44,6 +49,13 @@ const Almacen = () => {
   const [anaquelForm, setAnaquelForm] = useState({
     nombre: '', descripcion: '', linea_id: '', proveedor_principal: ''
   });
+
+  // New states for interactive view
+  const [viewMode, setViewMode] = useState('tabla'); // 'tabla' | 'grid' | 'analisis'
+  const [selectedHilera, setSelectedHilera] = useState(null);
+  const [organizacionData, setOrganizacionData] = useState(null);
+  const [loadingOrganizacion, setLoadingOrganizacion] = useState(false);
+  const [organizando, setOrganizando] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -72,6 +84,55 @@ const Almacen = () => {
     } catch (error) {
       console.error('Error loading hileras:', error);
     }
+  };
+
+  const loadHilerasInteractivo = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (selectedLinea) params.append('linea_id', selectedLinea.id);
+      if (selectedAnaquel) params.append('anaquel_id', selectedAnaquel.id);
+      
+      const res = await api.get(`/api/organizacion/hileras-contenido?${params.toString()}`);
+      setHileras(res.data);
+    } catch (error) {
+      console.error('Error loading interactive hileras:', error);
+    }
+  };
+
+  const loadAnalisisOrganizacion = async () => {
+    setLoadingOrganizacion(true);
+    try {
+      const params = selectedLinea ? `?linea_id=${selectedLinea.id}` : '';
+      const res = await api.get(`/api/organizacion/analisis${params}`);
+      setOrganizacionData(res.data);
+    } catch (error) {
+      console.error('Error loading analisis:', error);
+    } finally {
+      setLoadingOrganizacion(false);
+    }
+  };
+
+  const handleOrganizarAlmacen = async () => {
+    setOrganizando(true);
+    try {
+      const params = new URLSearchParams();
+      if (selectedLinea) params.append('linea_id', selectedLinea.id);
+      params.append('solo_incompatibles', 'true');
+      
+      const res = await api.post(`/api/organizacion/almacen?${params.toString()}`);
+      alert(`Organización completada: ${res.data.mensaje}`);
+      loadHilerasInteractivo();
+      loadAnalisisOrganizacion();
+    } catch (error) {
+      console.error('Error organizing:', error);
+      alert('Error al organizar el almacén');
+    } finally {
+      setOrganizando(false);
+    }
+  };
+
+  const handleHileraClick = (hilera) => {
+    setSelectedHilera(hilera);
   };
 
   // Cargar todos los proveedores para el modal
@@ -276,13 +337,56 @@ const Almacen = () => {
         </Button>
         <Button
           variant={activeTab === 'hileras' ? 'contained' : 'text'}
-          onClick={() => setActiveTab('hileras')}
+          onClick={() => { 
+            setActiveTab('hileras'); 
+            loadHilerasInteractivo();
+          }}
           startIcon={<ViewListIcon />}
-          disabled={!selectedAnaquel}
+          disabled={!selectedAnaquel && !selectedLinea}
         >
           Hileras
         </Button>
+        <Button
+          variant={activeTab === 'analisis' ? 'contained' : 'text'}
+          onClick={() => { 
+            setActiveTab('analisis'); 
+            loadAnalisisOrganizacion();
+          }}
+          startIcon={<AnalyticsIcon />}
+        >
+          Análisis
+        </Button>
       </Box>
+
+      {/* View Mode Selector for Hileras */}
+      {activeTab === 'hileras' && (
+        <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+          <Button
+            variant={viewMode === 'tabla' ? 'contained' : 'outlined'}
+            size="small"
+            onClick={() => setViewMode('tabla')}
+          >
+            Vista Tabla
+          </Button>
+          <Button
+            variant={viewMode === 'grid' ? 'contained' : 'outlined'}
+            size="small"
+            onClick={() => setViewMode('grid')}
+          >
+            Vista Grid Interactivo
+          </Button>
+          <Box sx={{ flex: 1 }} />
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={<OrganizeIcon />}
+            onClick={handleOrganizarAlmacen}
+            disabled={organizando}
+          >
+            {organizando ? 'Organizando...' : 'Auto Organizar'}
+          </Button>
+        </Box>
+      )}
 
       {/* Líneas de Negocio Tab */}
       {activeTab === 'lineas' && (
@@ -453,45 +557,216 @@ const Almacen = () => {
         </>
       )}
 
-      {/* Hileras Tab */}
-      {activeTab === 'hileras' && selectedAnaquel && (
+      {/* Hileras Tab - Vista Interactiva */}
+      {activeTab === 'hileras' && (
         <>
           <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6">
-              Hileras del Anaquel: {selectedAnaquel.nombre}
+              {selectedAnaquel 
+                ? `Hileras del Anaquel: ${selectedAnaquel.nombre}`
+                : selectedLinea
+                  ? `Hileras de Línea: ${selectedLinea.nombre}`
+                  : 'Vista General de Hileras'
+              }
             </Typography>
             <Button onClick={() => setActiveTab('anaqueles')}>
               Volver a Anaqueles
             </Button>
           </Box>
 
-          <Grid container spacing={2}>
-            {[...new Set(hileras.map(h => h.nivel))].sort().map((nivel) => (
-              <Grid item xs={12} key={nivel}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
-                  Nivel {nivel} ({hileras.filter(h => h.nivel === nivel && h.estado === 'disponible').length} disponibles)
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {hileras
-                    .filter(h => h.nivel === nivel)
-                    .sort((a, b) => a.fila - b.fila)
-                    .map((hilera) => (
-                      <Chip
-                        key={hilera.id}
-                        label={`F${hilera.fila}`}
-                        color={hilera.estado === 'disponible' ? 'success' : 'error'}
-                        variant={hilera.muestra ? 'filled' : 'outlined'}
-                        onClick={() => console.log('Hilera:', hilera)}
-                      />
-                    ))}
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
+          {viewMode === 'grid' ? (
+            <HileraGrid 
+              hileras={hileras} 
+              onHileraClick={handleHileraClick}
+              selectedHileraId={selectedHilera?.id}
+              showDetails={true}
+            />
+          ) : (
+            <Grid container spacing={2}>
+              {[...new Set(hileras.map(h => h.nivel))].sort().map((nivel) => (
+                <Grid item xs={12} key={nivel}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
+                    Nivel {nivel} ({hileras.filter(h => h.nivel === nivel && h.estado === 'disponible').length} disponibles)
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {hileras
+                      .filter(h => h.nivel === nivel)
+                      .sort((a, b) => a.fila - b.fila)
+                      .map((hilera) => (
+                        <Chip
+                          key={hilera.id}
+                          label={`F${hilera.fila}`}
+                          color={hilera.estado === 'disponible' ? 'success' : 'error'}
+                          variant={hilera.muestra ? 'filled' : 'outlined'}
+                          onClick={() => handleHileraClick(hilera)}
+                        />
+                      ))}
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+          )}
 
           {hileras.length === 0 && (
             <Alert severity="warning">
-              No hay hileras configuradas para este anaquel.
+              No hay hileras para mostrar. Seleccione una línea o anaquel primero.
+            </Alert>
+          )}
+
+          {/* Selected Hilera Details Panel */}
+          {selectedHilera && (
+            <Paper sx={{ mt: 2, p: 2, bgcolor: '#E3F2FD' }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Detalles de Hilera
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography variant="body2">
+                    <strong>Anaquel:</strong> {selectedHilera.anaquel_nombre}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Nivel:</strong> {selectedHilera.nivel}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Fila:</strong> {selectedHilera.fila}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Posición:</strong> {selectedHilera.posicion}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  {selectedHilera.muestra ? (
+                    <>
+                      <Typography variant="body2">
+                        <strong>Muestra:</strong> {selectedHilera.muestra.nombre}
+                      </Typography>
+                      <Typography variant="body2">
+                        <strong>Lote:</strong> {selectedHilera.muestra.lote}
+                      </Typography>
+                      <Typography variant="body2">
+                        <strong>Cantidad:</strong> {selectedHilera.muestra.cantidad}g
+                      </Typography>
+                      <Typography variant="body2">
+                        <strong>Clase:</strong> {selectedHilera.clase_peligro || 'Sin clase'}
+                      </Typography>
+                      {selectedHilera.tiene_incompatibilidad && (
+                        <Chip 
+                          icon={<WarningIcon />} 
+                          label="INCOMPATIBLE" 
+                          color="error" 
+                          size="small" 
+                          sx={{ mt: 1 }}
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <Typography variant="body2" color="success.main">
+                      <OkIcon sx={{ fontSize: 16, verticalAlign: 'middle', mr: 0.5 }} />
+                      Disponible
+                    </Typography>
+                  )}
+                </Grid>
+              </Grid>
+            </Paper>
+          )}
+        </>
+      )}
+
+      {/* Análisis Tab */}
+      {activeTab === 'analisis' && (
+        <>
+          {loadingOrganizacion ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : organizacionData ? (
+            <Grid container spacing={3}>
+              {/* Score Card */}
+              <Grid item xs={12} md={4}>
+                <Card sx={{ bgcolor: organizacionData.score_organizacion >= 80 ? '#E8F5E9' : organizacionData.score_organizacion >= 50 ? '#FFF3E0' : '#FFEBEE' }}>
+                  <CardHeader title="Score de Organización" />
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Typography variant="h2" sx={{ fontWeight: 700, color: organizacionData.score_organizacion >= 80 ? '#2E7D32' : organizacionData.score_organizacion >= 50 ? '#E65100' : '#C62828' }}>
+                      {organizacionData.score_organizacion}%
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {organizacionData.score_organizacion >= 80 ? 'Excelente organización' : organizacionData.score_organizacion >= 50 ? 'Requiere atención' : 'Necesita reubicación'}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Stats Cards */}
+              <Grid item xs={12} md={8}>
+                <Grid container spacing={2}>
+                  <Grid item xs={4}>
+                    <Card>
+                      <CardContent sx={{ textAlign: 'center' }}>
+                        <Typography variant="h4" color="primary">{organizacionData.total_muestras}</Typography>
+                        <Typography variant="body2">Total Muestras</Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Card>
+                      <CardContent sx={{ textAlign: 'center' }}>
+                        <Typography variant="h4" color="error">{organizacionData.incompatible_count}</Typography>
+                        <Typography variant="body2">Incompatibles</Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Card>
+                      <CardContent sx={{ textAlign: 'center' }}>
+                        <Typography variant="h4" color="success">{organizacionData.ok_count}</Typography>
+                        <Typography variant="body2">OK</Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </Grid>
+              </Grid>
+
+              {/* Suggestions */}
+              {organizacionData.sugerencias?.length > 0 && (
+                <Grid item xs={12}>
+                  <Paper sx={{ p: 2, bgcolor: '#FFF8E1' }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                      Sugerencias
+                    </Typography>
+                    {organizacionData.sugerencias.map((sugerencia, idx) => (
+                      <Typography key={idx} variant="body2" sx={{ mb: 0.5 }}>
+                        • {sugerencia}
+                      </Typography>
+                    ))}
+                  </Paper>
+                </Grid>
+              )}
+
+              {/* Incompatibilities List */}
+              {organizacionData.problemas?.length > 0 && (
+                <Grid item xs={12}>
+                  <Paper sx={{ p: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                      Incompatibilidades Detectadas ({organizacionData.problemas.length})
+                    </Typography>
+                    <List>
+                      {organizacionData.problemas.map((problema, idx) => (
+                        <React.Fragment key={idx}>
+                          <ListItemText
+                            primary={`${problema.nombre} (${problema.clase_peligro})`}
+                            secondary={`${problema.incompatibilidades?.length || 0} incompatibilidades`}
+                          />
+                          {idx < organizacionData.problemas.length - 1 && <Divider />}
+                        </React.Fragment>
+                      ))}
+                    </List>
+                  </Paper>
+                </Grid>
+              )}
+            </Grid>
+          ) : (
+            <Alert severity="info">
+              No hay datos de análisis. Haga clic en "Análisis" para cargar.
             </Alert>
           )}
         </>

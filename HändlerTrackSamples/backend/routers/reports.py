@@ -107,3 +107,34 @@ def exportar_reporte(
     excel_bytes = ReportsService.exportar_excel(data)
 
     return {"success": True, "tipo": tipo, "data": data, "excel_available": True}
+
+
+@router.get("/organizacion")
+def get_reporte_organizacion(
+    linea_id: Optional[int] = Query(None, description="ID de línea a analizar"),
+    db: Session = Depends(get_db),
+):
+    """
+    Genera reporte del estado de organización del almacén.
+    Incluye score, incompatibilidades y sugerencias.
+    """
+    return ReportsService.generar_reporte_organizacion(db, linea_id)
+
+
+@router.get("/exportar/organizacion")
+def exportar_reporte_organizacion(
+    linea_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """
+    Exporta reporte de organización a formato Excel.
+    """
+    data = ReportsService.generar_reporte_organizacion(db, linea_id)
+    excel_bytes = ReportsService.exportar_excel(data)
+
+    return {
+        "success": True,
+        "tipo": "organizacion",
+        "data": data,
+        "excel_available": True,
+    }

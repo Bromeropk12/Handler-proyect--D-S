@@ -61,7 +61,8 @@ def get_alertas_optimizacion(db: Session = Depends(get_db)):
 @router.get("/por-tipo")
 def get_alertas_por_tipo(
     tipo: str = Query(
-        ..., description="Tipo: stock_bajo, vencimiento, vencidas, optimizacion"
+        ...,
+        description="Tipo: stock_bajo, vencimiento, vencidas, optimizacion, organizacion",
     ),
     limite: int = Query(50, description="Número máximo de resultados"),
     db: Session = Depends(get_db),
@@ -71,3 +72,12 @@ def get_alertas_por_tipo(
     """
     alertas = AlertasService.get_alertas_por_tipo(db, tipo, limite)
     return {"success": True, "tipo": tipo, "cantidad": len(alertas), "alertas": alertas}
+
+
+@router.get("/organizacion")
+def get_alertas_organizacion(db: Session = Depends(get_db)):
+    """
+    Obtiene alertas de organización del almacén.
+    Detecta incompatibilidades y problemas de ubicación.
+    """
+    return AlertasService.verificar_organizacion(db)

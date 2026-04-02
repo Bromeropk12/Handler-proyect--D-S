@@ -333,5 +333,67 @@ class AlertasService:
         elif tipo == "optimizacion":
             result = AlertasService.verificar_optimizacion_espacio(db)
             return result.get("oportunidades", [])[:limite]
+        elif tipo == "organizacion":
+            result = AlertasService.verificar_organizacion(db)
+            return result.get("alertas", [])[:limite]
 
         return []
+
+    @staticmethod
+    def verificar_organizacion(db: Session) -> Dict[str, Any]:
+        """
+        Verifica el estado de organización del almacén.
+        Detecta muestras incompatibles y genera alertas.
+
+        Returns:
+            Diccionario con alertas de organización
+        """
+        from services.motor_organizacion import MotorOrganizacion
+
+        # Obtener análisis completo
+        analisis = MotorOrganizacion.analizar_organizacion_actual(db)
+
+        alertas = []
+
+        # Alerta de score bajo
+        if analisis.get("score_organizacion", 100) < 80:
+            alertas.append(
+                {
+                    "tipo": "score_bajo",
+                    "nivel": "alto" if analisis["score_organizacion"] < 50 else "medio",
+                    "titulo": "Score de Organización Bajo",
+                    "mensaje": f"El score de organización es {analisis['score_organizacion']}%",
+                    "sugerencia": "Ejecute la organización automática para corregir",
+                }
+            )
+
+        # Alertas de incompatibilidades
+        for problema in analisis.get("problemas", [])[:10]:
+            incompatibles = problema.get("incompatibilidades", [])
+            for incompat in incompatibles:
+                alertas.append(
+                    {
+                        "tipo": "incompatible",
+                        "nivel": incompat.get("nivel", "alto"),
+                        "titulo": f"Incompatibilidad: {problema['nombre']}",
+                        "muestra_id": problema["muestra_id"],
+                        "muestra_nombre": problema["nombre"],
+                        "clase_peligro": problema.get("clase_peligro"),
+                        "mensaje": incompat.get("mensaje", ""),
+                        "vecino": incompat.get("vecino", {}),
+                        "sugerencia": "Reubicar una de las muestras",
+                    }
+                )
+
+        # Resumen
+        return {
+            "success": True,
+            "alertas": alertas,
+            "resumen": {
+                "total_muestras": analisis.get("total_muestras", 0),
+                "incompatibles": analisis.get("incompatible_count", 0),
+                "ok": analisis.get("ok_count", 0),
+                "score": analisis.get("score_organizacion", 0),
+            },
+            "sugerencias": analisis.get("sugerencias", []),
+        }

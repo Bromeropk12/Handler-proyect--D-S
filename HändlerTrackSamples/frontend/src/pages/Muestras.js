@@ -1,57 +1,67 @@
 /**
- * Página de Gestión de Muestras
- * Catálogo completo de muestras de materias primas
+ * Página de Gestión de Muestras - DISEÑO MINIMALISTA
+ * Vista limpia con opción de eliminar definitivamente
+ * Incluye generación de etiquetas QR
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box, Typography, Button, TextField, MenuItem, Chip, IconButton,
   Dialog, DialogTitle, DialogContent, DialogActions, Grid,
-  InputAdornment, Paper, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, TablePagination, FormControl, InputLabel,
-  Select, Snackbar, Alert, CircularProgress, Tooltip
+  InputAdornment, Paper, Card, CardContent, Snackbar, Alert, 
+  LinearProgress, Tooltip, Divider, Avatar
 } from '@mui/material';
 import {
   Add as AddIcon, Search as SearchIcon, Edit as EditIcon,
-  Visibility as ViewIcon, Delete as DeleteIcon, Refresh as RefreshIcon,
-  Inventory2 as SampleIcon
+  Delete as DeleteIcon, Refresh as RefreshIcon,
+  ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon,
+  Inventory2 as SampleIcon, FilterList as FilterIcon,
+  QrCode as QrCodeIcon, Print as PrintIcon
 } from '@mui/icons-material';
 import { muestrasAPI, proveedoresAPI, clasesPeligroAPI, dosificacionAPI } from '../services/api';
+import api from '../services/api';
+import EtiquetaPreview from '../components/EtiquetaPreview';
 
 const Muestras = () => {
-  // Estados
   const [muestras, setMuestras] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [totalMuestras, setTotalMuestras] = useState(0);
+  const [expandedCard, setExpandedCard] = useState(null);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [contadoresSubmuestras, setContadoresSubmuestras] = useState({});
+  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [eliminadas, setEliminadas] = useState([]);
   
-  // Filtros
   const [search, setSearch] = useState('');
   const [filtroLinea, setFiltroLinea] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('');
   const [filtroProveedor, setFiltroProveedor] = useState('');
   
-  // Opciones para dropdowns
   const [proveedores, setProveedores] = useState([]);
   const [clasesPeligro, setClasesPeligro] = useState([]);
   const [lineasOptions, setLineasOptions] = useState([]);
   const [estadosOptions, setEstadosOptions] = useState([]);
   const [dimensionesOptions, setDimensionesOptions] = useState([]);
   
-  // Modal de formulario
   const [openModal, setOpenModal] = useState(false);
+  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
+  const [muestraToDelete, setMuestraToDelete] = useState(null);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [muestraActual, setMuestraActual] = useState(null);
   const [saving, setSaving] = useState(false);
   
-  // Snackbar
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [contadoresSubmuestras, setContadoresSubmuestras] = useState({});
 
-  // Cargar opciones al inicio
+  // Etiqueta QR
+  const [openEtiqueta, setOpenEtiqueta] = useState(false);
+  const [etiquetaData, setEtiquetaData] = useState(null);
+  const [generandoEtiqueta, setGenerandoEtiqueta] = useState(false);
+
   useEffect(() => {
     loadOptions();
+    const eliminadasGuardadas = localStorage.getItem('muestrasEliminadas');
+    if (eliminadasGuardadas) {
+      setEliminadas(JSON.parse(eliminadasGuardadas));
+    }
   }, []);
 
   const loadOptions = async () => {
@@ -73,7 +83,6 @@ const Muestras = () => {
     }
   };
 
-  // Cargar muestras
   const loadMuestras = useCallback(async () => {
     setLoading(true);
     try {
@@ -86,10 +95,7 @@ const Muestras = () => {
         proveedor_id: filtroProveedor || undefined
       };
       const response = await muestrasAPI.getAll(params);
-      setMuestras(response.data);
-      setTotalMuestras(response.data.length);
       
-      // Cargar contadores de sub-muestras
       const contadores = {};
       for (const m of response.data) {
         try {
@@ -100,6 +106,7 @@ const Muestras = () => {
         }
       }
       setContadoresSubmuestras(contadores);
+      setMuestras(response.data);
     } catch (error) {
       console.error('Error cargando muestras:', error);
       showSnackbar('Error al cargar muestras', 'error');
@@ -112,16 +119,6 @@ const Muestras = () => {
     loadMuestras();
   }, [loadMuestras]);
 
-  // Handlers
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });
   };
@@ -131,27 +128,13 @@ const Muestras = () => {
     loadMuestras();
   };
 
-  // Modal de creación/edición
   const handleOpenCreate = () => {
     setModoEdicion(false);
     setMuestraActual({
-      nombre: '',
-      nombre_alternativo: '',
-      cas_number: '',
-      lote: '',
-      proveedor_id: '',
-      linea_negocio: 'cosméticos',
-      clase_peligro_id: '',
-      cantidad_gramos: '',
-      dimension: '1x1',
-      fecha_manufactura: null,
-      fecha_vencimiento: null,
-      qr_code: '',
-      coa_path: '',
-      hoja_seguridad_path: '',
-      estado: 'activa',
-      observaciones: '',
-      etiquetas: ''
+      nombre: '', nombre_alternativo: '', cas_number: '', lote: '',
+      proveedor_id: '', linea_negocio: 'cosméticos', clase_peligro_id: '',
+      cantidad_gramos: '', dimension: '1x1', fecha_manufactura: null,
+      fecha_vencimiento: null, qr_code: '', estado: 'activa', observaciones: ''
     });
     setOpenModal(true);
   };
@@ -160,7 +143,6 @@ const Muestras = () => {
     setModoEdicion(true);
     setMuestraActual({
       ...muestra,
-      // Mantener cantidad_gramos como string para permitir edición
       cantidad_gramos: String(muestra.cantidad_gramos ?? '')
     });
     setOpenModal(true);
@@ -171,22 +153,41 @@ const Muestras = () => {
     setMuestraActual(null);
   };
 
+  const handleConfirmDelete = (muestra) => {
+    setMuestraToDelete(muestra);
+    setOpenDeleteConfirm(true);
+  };
+
+  const handlePermanentDelete = async () => {
+    if (!muestraToDelete) return;
+    
+    try {
+      await muestrasAPI.delete(muestraToDelete.id);
+      
+      const nuevasEliminadas = [...eliminadas, muestraToDelete.id];
+      setEliminadas(nuevasEliminadas);
+      localStorage.setItem('muestrasEliminadas', JSON.stringify(nuevasEliminadas));
+      
+      showSnackbar(`"${muestraToDelete.nombre}" eliminada definitivamente`);
+      setOpenDeleteConfirm(false);
+      setMuestraToDelete(null);
+      loadMuestras();
+    } catch (error) {
+      console.error('Error eliminando muestra:', error);
+      showSnackbar('Error al eliminar muestra', 'error');
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Convertir cantidad_gramos a número antes de guardar
-      // Y formatear fechas correctamente
       const formatDate = (date) => {
         if (!date) return null;
         if (date instanceof Date) return date.toISOString();
-        if (typeof date === 'string') {
-          // Si es formato YYYY-MM-DD, agregar tiempo
-          if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-            return date + 'T00:00:00';
-          }
-          return date;
+        if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+          return date + 'T00:00:00';
         }
-        return null;
+        return date;
       };
 
       const dataToSave = {
@@ -194,12 +195,10 @@ const Muestras = () => {
         cantidad_gramos: muestraActual.cantidad_gramos === '' ? 0 : Number(muestraActual.cantidad_gramos),
         fecha_manufactura: formatDate(muestraActual.fecha_manufactura),
         fecha_vencimiento: formatDate(muestraActual.fecha_vencimiento),
-        // Limpiar campos opcionales vacíos
         proveedor_id: muestraActual.proveedor_id || null,
         clase_peligro_id: muestraActual.clase_peligro_id || null,
       };
       
-      // Eliminar campos que no deberían enviarse vacíos como strings
       delete dataToSave.created_at;
       delete dataToSave.updated_at;
       delete dataToSave.fecha_ingreso;
@@ -215,27 +214,9 @@ const Muestras = () => {
       loadMuestras();
     } catch (error) {
       console.error('Error guardando muestra:', error);
-      const errorMessage = error.response?.data?.detail 
-        ? (typeof error.response.data.detail === 'string' 
-            ? error.response.data.detail 
-            : JSON.stringify(error.response.data.detail))
-        : 'Error al guardar muestra';
-      showSnackbar(errorMessage, 'error');
+      showSnackbar('Error al guardar muestra', 'error');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('¿Está seguro de eliminar esta muestra?')) return;
-    
-    try {
-      await muestrasAPI.delete(id);
-      showSnackbar('Muestra eliminada correctamente');
-      loadMuestras();
-    } catch (error) {
-      console.error('Error eliminando muestra:', error);
-      showSnackbar('Error al eliminar muestra', 'error');
     }
   };
 
@@ -244,463 +225,344 @@ const Muestras = () => {
     setMuestraActual(prev => ({ ...prev, [field]: value }));
   };
 
-  // Obtener nombre de proveedor
   const getProveedorNombre = (id) => {
     const prov = proveedores.find(p => p.id === id);
-    return prov ? prov.nombre : '-';
+    return prov ? prov.nombre : 'N/A';
   };
 
-  // Obtener clase de peligro
+  const handleGenerarEtiqueta = async (muestra) => {
+    setGenerandoEtiqueta(true);
+    try {
+      const response = await api.post('/api/qr/generar-etiqueta', {
+        muestra_id: muestra.id,
+        nombre: muestra.nombre,
+        lote: muestra.lote,
+        cantidad: muestra.cantidad_gramos,
+        proveedor: getProveedorNombre(muestra.proveedor_id),
+        fecha_vencimiento: muestra.fecha_vencimiento
+      });
+      setEtiquetaData(response.data.etiqueta);
+      setOpenEtiqueta(true);
+    } catch (error) {
+      console.error('Error generando etiqueta:', error);
+      showSnackbar('Error al generar etiqueta', 'error');
+    } finally {
+      setGenerandoEtiqueta(false);
+    }
+  };
+
   const getClasePeligroNombre = (id) => {
-    if (!id || id === '' || id === null) {
-      return 'Sin asignar';
-    }
+    if (!id || id === '' || id === null) return 'Sin clase';
     const clase = clasesPeligro.find(c => c.id === id);
-    if (clase) {
-      if (clase.codigo === 'GHS00') {
-        return 'No peligroso';
-      }
-      return `${clase.codigo} - ${clase.nombre}`;
-    }
-    return 'Sin asignar';
+    if (clase) return clase.codigo === 'GHS00' ? 'No peligroso' : clase.codigo;
+    return 'Sin clase';
   };
 
-  // Obtener color de clase de peligro para el badge
   const getClasePeligroColor = (id) => {
-    if (!id || id === '' || id === null) {
-      return 'default'; // Gris para "Sin asignar"
-    }
+    if (!id || id === '' || id === null) return 'default';
     const clase = clasesPeligro.find(c => c.id === id);
-    if (clase && clase.codigo === 'GHS00') {
-      return 'success'; // Verde para No peligroso
-    }
-    return 'warning'; // Naranja para clases peligrosas
+    if (clase && clase.codigo === 'GHS00') return 'success';
+    return 'warning';
   };
 
-  // Color de estado
   const getEstadoColor = (estado) => {
-    const colors = {
-      activa: 'success',
-      inactiva: 'default',
-      agotada: 'warning',
-      vencida: 'error',
-      retirada: 'default'
-    };
+    const colors = { activa: 'success', inactiva: 'default', agotada: 'warning', vencida: 'error' };
     return colors[estado] || 'default';
   };
 
+  const toggleExpand = (id) => {
+    setExpandedCard(expandedCard === id ? null : id);
+  };
+
+  const formatearFecha = (fecha) => {
+    if (!fecha) return '-';
+    try {
+      return new Date(fecha).toLocaleDateString('es-CO');
+    } catch {
+      return fecha;
+    }
+  };
+
+  const diasParaVencer = (fechaVencimiento) => {
+    if (!fechaVencimiento) return null;
+    const hoy = new Date();
+    const vencimiento = new Date(fechaVencimiento);
+    return Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24));
+  };
+
+  // Filtrar muestras eliminadas
+  const muestrasFiltradas = muestras.filter(m => !eliminadas.includes(m.id));
+
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Encabezado */}
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-        <SampleIcon sx={{ fontSize: 32, mr: 2, color: 'primary.main' }} />
-        <Typography variant="h4" component="h1">
-          Catálogo de Muestras
+    <Box sx={{ p: 2, maxWidth: '100%' }}>
+      {/* Header minimalista */}
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
+        <Typography variant="h5" sx={{ fontWeight: 600 }}>
+          Muestras
         </Typography>
+        <Chip label={`${muestrasFiltradas.length} items`} size="small" />
+        <Box sx={{ flexGrow: 1 }} />
+        <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={handleOpenCreate}>
+          Agregar
+        </Button>
       </Box>
 
-      {/* Filtros */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth
-              label="Buscar"
-              placeholder="Nombre, CAS o Lote"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                )
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>Línea de Negocio</InputLabel>
-              <Select
-                value={filtroLinea}
-                onChange={(e) => setFiltroLinea(e.target.value)}
-                label="Línea de Negocio"
-              >
-                <MenuItem value="">Todas</MenuItem>
-                {lineasOptions.map(opt => (
-                  <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>Estado</InputLabel>
-              <Select
-                value={filtroEstado}
-                onChange={(e) => setFiltroEstado(e.target.value)}
-                label="Estado"
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {estadosOptions.map(opt => (
-                  <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>Proveedor</InputLabel>
-              <Select
-                value={filtroProveedor}
-                onChange={(e) => setFiltroProveedor(e.target.value)}
-                label="Proveedor"
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {proveedores.map(prov => (
-                  <MenuItem key={prov.id} value={prov.id}>{prov.nombre}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleOpenCreate}
-              >
-                Nueva Muestra
-              </Button>
-              <IconButton onClick={loadMuestras} title="Actualizar">
-                <RefreshIcon />
-              </IconButton>
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
-
-      {/* Tabla de resultados */}
-      <Paper>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Nombre</TableCell>
-                  <TableCell>CAS</TableCell>
-                  <TableCell>Lote</TableCell>
-                  <TableCell>Proveedor</TableCell>
-                  <TableCell>Línea</TableCell>
-<TableCell>Cantidad</TableCell>
-                    <TableCell>Disp.</TableCell>
-                    <TableCell>Clase Peligro</TableCell>
-                  <TableCell>Estado</TableCell>
-                  <TableCell align="right">Acciones</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {muestras.map((muestra) => (
-                  <TableRow key={muestra.id} hover>
-                    <TableCell>{muestra.id}</TableCell>
-                    <TableCell>{muestra.nombre}</TableCell>
-                    <TableCell>{muestra.cas_number || '-'}</TableCell>
-                    <TableCell>{muestra.lote || '-'}</TableCell>
-                    <TableCell>{getProveedorNombre(muestra.proveedor_id)}</TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={muestra.linea_negocio} 
-                        size="small" 
-                        color="primary" 
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {Number(muestra.cantidad_gramos).toFixed(2)} g
-                      {muestra.dimension && (
-                        <Typography variant="caption" display="block" color="text.secondary">
-                          {muestra.dimension}
-                        </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {contadoresSubmuestras[muestra.id] > 0 ? (
-                        <Chip 
-                          label={`${contadoresSubmuestras[muestra.id]} uds`} 
-                          size="small" 
-                          color="success" 
-                          variant="outlined"
-                        />
-                      ) : (
-                        <Typography variant="body2" color="text.disabled">-</Typography>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={getClasePeligroNombre(muestra.clase_peligro_id)} 
-                        size="small" 
-                        color={getClasePeligroColor(muestra.clase_peligro_id)}
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={muestra.estado} 
-                        size="small" 
-                        color={getEstadoColor(muestra.estado)}
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Ver">
-                        <IconButton size="small">
-                          <ViewIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Editar">
-                        <IconButton size="small" onClick={() => handleOpenEdit(muestra)}>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Eliminar">
-                        <IconButton size="small" color="error" onClick={() => handleDelete(muestra.id)}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {muestras.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
-                      <Typography color="text.secondary">
-                        No se encontraron muestras
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 50, 100]}
-          component="div"
-          count={totalMuestras}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
+      {/* Filtros minimalistas */}
+      <Paper sx={{ p: 1.5, mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+        <TextField
+          size="small"
+          placeholder="Buscar..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          sx={{ minWidth: 150 }}
+          InputProps={{
+            startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment>
+          }}
         />
+        <TextField select size="small" value={filtroLinea} onChange={(e) => setFiltroLinea(e.target.value)} sx={{ minWidth: 100 }}>
+          <MenuItem value="">Línea</MenuItem>
+          {lineasOptions.map(opt => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
+        </TextField>
+        <TextField select size="small" value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} sx={{ minWidth: 100 }}>
+          <MenuItem value="">Estado</MenuItem>
+          {estadosOptions.map(opt => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
+        </TextField>
+        <TextField select size="small" value={filtroProveedor} onChange={(e) => setFiltroProveedor(e.target.value)} sx={{ minWidth: 120 }}>
+          <MenuItem value="">Proveedor</MenuItem>
+          {proveedores.map(prov => <MenuItem key={prov.id} value={prov.id}>{prov.nombre}</MenuItem>)}
+        </TextField>
+        <Button size="small" onClick={handleSearch}>Filtrar</Button>
+        <IconButton size="small" onClick={loadMuestras}><RefreshIcon fontSize="small" /></IconButton>
       </Paper>
 
-      {/* Modal de formulario */}
-      <Dialog open={openModal} onClose={handleCloseModal} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {modoEdicion ? 'Editar Muestra' : 'Nueva Muestra'}
+      {loading && <LinearProgress sx={{ mb: 1 }} />}
+
+      {/* Lista minimalista de cards */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        {muestrasFiltradas.map((muestra) => {
+          const diasVenc = diasParaVencer(muestra.fecha_vencimiento);
+          const vencido = diasVenc !== null && diasVenc < 0;
+          
+          return (
+            <Card 
+              key={muestra.id}
+              sx={{ 
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                '&:hover': { boxShadow: 3 }
+              }}
+              onClick={() => toggleExpand(muestra.id)}
+            >
+              <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
+                <Grid container spacing={2} alignItems="center">
+                  {/* Info principal en una línea */}
+                  <Grid item xs={12} md={3}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Avatar sx={{ width: 36, height: 36, bgcolor: 'grey.200', color: 'grey.600' }}>
+                        <SampleIcon fontSize="small" />
+                      </Avatar>
+                      <Box>
+                        <Typography variant="body1" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
+                          {muestra.nombre}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {muestra.cas_number || 'Sin CAS'} · {muestra.lote || 'Sin lote'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={4} md={2}>
+                    <Typography variant="caption" color="text.secondary" display="block">Proveedor</Typography>
+                    <Typography variant="body2" noWrap>{getProveedorNombre(muestra.proveedor_id)}</Typography>
+                  </Grid>
+
+                  <Grid item xs={4} md={2}>
+                    <Typography variant="caption" color="text.secondary" display="block">Cantidad</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                      {Number(muestra.cantidad_gramos).toFixed(1)}g
+                    </Typography>
+                  </Grid>
+
+                  <Grid item xs={4} md={2}>
+                    <Typography variant="caption" color="text.secondary" display="block">Vence</Typography>
+                    <Typography variant="body2" color={vencido ? 'error' : 'text.primary'}>
+                      {vencido ? 'Vencida' : formatearFecha(muestra.fecha_vencimiento)}
+                    </Typography>
+                  </Grid>
+
+                  <Grid item xs={6} md={2}>
+                    <Chip 
+                      label={getClasePeligroNombre(muestra.clase_peligro_id)} 
+                      color={getClasePeligroColor(muestra.clase_peligro_id)}
+                      size="small" 
+                      variant="outlined"
+                    />
+                  </Grid>
+
+                  <Grid item xs={6} md={1}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Chip label={muestra.estado} color={getEstadoColor(muestra.estado)} size="small" />
+                      {expandedCard === muestra.id ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                    </Box>
+                  </Grid>
+                </Grid>
+
+                {/* Expanded */}
+                {expandedCard === muestra.id && (
+                  <>
+                    <Divider sx={{ my: 1.5 }} />
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={4}>
+                          <Typography variant="caption" color="text.secondary">Nombre alternativo</Typography>
+                          <Typography variant="body2">{muestra.nombre_alternativo || '-'}</Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={2}>
+                          <Typography variant="caption" color="text.secondary">Línea</Typography>
+                          <Typography variant="body2">{muestra.linea_negocio}</Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={2}>
+                          <Typography variant="caption" color="text.secondary">Dimensión</Typography>
+                          <Typography variant="body2">{muestra.dimension || '1x1'}</Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={2}>
+                          <Typography variant="caption" color="text.secondary">Fabricación</Typography>
+                          <Typography variant="body2">{formatearFecha(muestra.fecha_manufactura)}</Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={12}>
+                          <Typography variant="caption" color="text.secondary">Observaciones</Typography>
+                          <Typography variant="body2" sx={{ fontStyle: muestra.observaciones ? 'normal' : 'italic' }}>
+                            {muestra.observaciones || 'Sin observaciones'}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                      <Box sx={{ display: 'flex', gap: 0.5 }} onClick={(e) => e.stopPropagation()}>
+                        <Tooltip title="Imprimir Etiqueta">
+                          <IconButton size="small" color="info" onClick={() => handleGenerarEtiqueta(muestra)}>
+                            <QrCodeIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Editar">
+                          <IconButton size="small" onClick={() => handleOpenEdit(muestra)}>
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Eliminar definitivamente">
+                          <IconButton size="small" color="error" onClick={() => handleConfirmDelete(muestra)}>
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </Box>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+
+        {muestrasFiltradas.length === 0 && !loading && (
+          <Paper sx={{ p: 4, textAlign: 'center' }}>
+            <SampleIcon sx={{ fontSize: 40, color: 'grey.400', mb: 1 }} />
+            <Typography color="text.secondary">No hay muestras</Typography>
+            <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={handleOpenCreate} sx={{ mt: 1 }}>
+              Crear muestra
+            </Button>
+          </Paper>
+        )}
+      </Box>
+
+      {/* Paginación simple */}
+      {muestrasFiltradas.length > 0 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, gap: 1 }}>
+          <Button size="small" disabled={page === 0} onClick={() => setPage(0)}>Inicio</Button>
+          <Typography sx={{ alignSelf: 'center' }}>Página {page + 1}</Typography>
+          <Button size="small" onClick={() => setPage(p => p + 1)} disabled={muestrasFiltradas.length < rowsPerPage}>Siguiente</Button>
+        </Box>
+      )}
+
+      {/* Modal crear/editar */}
+      <Dialog open={openModal} onClose={handleCloseModal} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 600 }}>
+          {modoEdicion ? 'Editar' : 'Nueva'} Muestra
         </DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            {/* Nombre */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Nombre *"
-                value={muestraActual?.nombre || ''}
-                onChange={handleInputChange('nombre')}
-              />
+          <Grid container spacing={1.5} sx={{ mt: 0.5 }}>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth size="small" label="Nombre *" value={muestraActual?.nombre || ''} onChange={handleInputChange('nombre')} />
             </Grid>
-            {/* Nombre alternativo */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Nombre Alternativo"
-                value={muestraActual?.nombre_alternativo || ''}
-                onChange={handleInputChange('nombre_alternativo')}
-              />
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth size="small" label="CAS" value={muestraActual?.cas_number || ''} onChange={handleInputChange('cas_number')} />
             </Grid>
-            {/* CAS Number */}
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="CAS Number"
-                value={muestraActual?.cas_number || ''}
-                onChange={handleInputChange('cas_number')}
-              />
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth size="small" label="Lote" value={muestraActual?.lote || ''} onChange={handleInputChange('lote')} />
             </Grid>
-            {/* Lote */}
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="Lote"
-                value={muestraActual?.lote || ''}
-                onChange={handleInputChange('lote')}
-              />
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth size="small" select label="Proveedor" value={muestraActual?.proveedor_id || ''} onChange={handleInputChange('proveedor_id')}>
+                <MenuItem value=""><em>None</em></MenuItem>
+                {proveedores.map(p => <MenuItem key={p.id} value={p.id}>{p.nombre}</MenuItem>)}
+              </TextField>
             </Grid>
-            {/* Proveedor */}
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth>
-                <InputLabel>Proveedor</InputLabel>
-                <Select
-                  value={muestraActual?.proveedor_id || ''}
-                  onChange={handleInputChange('proveedor_id')}
-                  label="Proveedor"
-                >
-                  <MenuItem value="">Seleccionar...</MenuItem>
-                  {proveedores.map(prov => (
-                    <MenuItem key={prov.id} value={prov.id}>{prov.nombre}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+            <Grid item xs={12} sm={4}>
+              <TextField fullWidth size="small" label="Cantidad (g) *" type="number" value={muestraActual?.cantidad_gramos ?? ''} onChange={handleInputChange('cantidad_gramos')} />
             </Grid>
-            {/* Línea de negocio */}
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth>
-                <InputLabel>Línea de Negocio *</InputLabel>
-                <Select
-                  value={muestraActual?.linea_negocio || ''}
-                  onChange={handleInputChange('linea_negocio')}
-                  label="Línea de Negocio *"
-                >
-                  {lineasOptions.map(opt => (
-                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+            <Grid item xs={12} sm={4}>
+              <TextField fullWidth size="small" select label="Línea" value={muestraActual?.linea_negocio || ''} onChange={handleInputChange('linea_negocio')}>
+                {lineasOptions.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+              </TextField>
             </Grid>
-            {/* Clase de peligro */}
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth>
-                <InputLabel>Clase de Peligro</InputLabel>
-                <Select
-                  value={muestraActual?.clase_peligro_id || ''}
-                  onChange={handleInputChange('clase_peligro_id')}
-                  label="Clase de Peligro"
-                >
-                  {clasesPeligro.map(clase => (
-                    <MenuItem key={clase.id} value={clase.id}>
-                      {clase.codigo === 'GHS00' ? 'No peligroso' : `${clase.codigo} - ${clase.nombre}`}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+            <Grid item xs={12} sm={4}>
+              <TextField fullWidth size="small" select label="Estado" value={muestraActual?.estado || 'activa'} onChange={handleInputChange('estado')}>
+                {estadosOptions.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+              </TextField>
             </Grid>
-            {/* Cantidad */}
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="Cantidad (gramos) *"
-                type="text"
-                inputMode="numeric"
-                value={muestraActual?.cantidad_gramos ?? ''}
-                onChange={handleInputChange('cantidad_gramos')}
-                onWheel={(e) => e.target.blur()}
-                onKeyDown={(e) => {
-                  // Prevenir entrada de caracteres no numéricos excepto números, punto y backspace
-                  const allowedKeys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', 'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
-                  if (!allowedKeys.includes(e.key)) {
-                    e.preventDefault();
-                  }
-                  // Solo permitir un punto decimal
-                  if (e.key === '.' && e.target.value.includes('.')) {
-                    e.preventDefault();
-                  }
-                }}
-                placeholder="Ej: 500"
-              />
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth size="small" label="Fabricación" type="date" value={muestraActual?.fecha_manufactura?.split('T')[0] || ''} onChange={handleInputChange('fecha_manufactura')} InputLabelProps={{ shrink: true }} />
             </Grid>
-            {/* Dimensión */}
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth>
-                <InputLabel>Dimensión *</InputLabel>
-                <Select
-                  value={muestraActual?.dimension || '1x1'}
-                  onChange={handleInputChange('dimension')}
-                  label="Dimensión *"
-                >
-                  {dimensionesOptions.map(opt => (
-                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth size="small" label="Vencimiento" type="date" value={muestraActual?.fecha_vencimiento?.split('T')[0] || ''} onChange={handleInputChange('fecha_vencimiento')} InputLabelProps={{ shrink: true }} />
             </Grid>
-            {/* Estado */}
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth>
-                <InputLabel>Estado *</InputLabel>
-                <Select
-                  value={muestraActual?.estado || 'activa'}
-                  onChange={handleInputChange('estado')}
-                  label="Estado *"
-                >
-                  {estadosOptions.map(opt => (
-                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            {/* Fecha manufactura */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Fecha de Manufactura"
-                type="date"
-                value={muestraActual?.fecha_manufactura?.split('T')[0] || ''}
-                onChange={handleInputChange('fecha_manufactura')}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            {/* Fecha vencimiento */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Fecha de Vencimiento"
-                type="date"
-                value={muestraActual?.fecha_vencimiento?.split('T')[0] || ''}
-                onChange={handleInputChange('fecha_vencimiento')}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            {/* Observaciones */}
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Observaciones"
-                multiline
-                rows={3}
-                value={muestraActual?.observaciones || ''}
-                onChange={handleInputChange('observaciones')}
-              />
+              <TextField fullWidth size="small" label="Observaciones" multiline rows={2} value={muestraActual?.observaciones || ''} onChange={handleInputChange('observaciones')} />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseModal}>Cancelar</Button>
-          <Button 
-            variant="contained" 
-            onClick={handleSave}
-            disabled={saving || !muestraActual?.nombre}
-          >
+          <Button variant="contained" onClick={handleSave} disabled={saving || !muestraActual?.nombre}>
             {saving ? 'Guardando...' : 'Guardar'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
+      {/* Confirmar eliminación */}
+      <Dialog open={openDeleteConfirm} onClose={() => setOpenDeleteConfirm(false)}>
+        <DialogTitle>Eliminar muestra</DialogTitle>
+        <DialogContent>
+          <Typography>
+            ¿Estás seguro de eliminar "{muestraToDelete?.nombre}"? Esta acción no se puede deshacer.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteConfirm(false)}>Cancelar</Button>
+          <Button variant="contained" color="error" onClick={handlePermanentDelete}>Eliminar</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
         <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Vista previa de etiqueta */}
+      <EtiquetaPreview 
+        open={openEtiqueta}
+        onClose={() => setOpenEtiqueta(false)}
+        etiqueta={etiquetaData}
+      />
     </Box>
   );
 };

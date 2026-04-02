@@ -91,3 +91,66 @@ def verificar_qr(qr_data: str):
     Verifica y decodifica un código QR.
     """
     return QRService.verificar_qr(qr_data)
+
+
+@router.post("/generar-etiqueta")
+def generar_etiqueta_full(request: EtiquetaMuestraRequest):
+    """
+    Genera etiqueta completa para muestra (usado por frontend).
+    """
+    return QRService.generar_etiqueta_muestra(
+        request.muestra_id,
+        request.nombre,
+        request.lote,
+        request.cantidad,
+        request.proveedor,
+        request.fecha_vencimiento,
+    )
+
+
+@router.post("/escanear")
+def escanear_qr(qr_data: str):
+    """
+    Escanea un código QR y retorna información de la muestra.
+    """
+    resultado = QRService.verificar_qr(qr_data)
+
+    if not resultado.get("valid"):
+        return {"success": False, "error": "QR no válido", "data": resultado}
+
+    # Si es una muestra, buscar en BD
+    if resultado.get("tipo") == "muestra":
+        from models.sample import Sample
+
+        db = next(get_db())
+        muestra = (
+            db.query(Sample).filter(Sample.id == resultado.get("muestra_id")).first()
+        )
+
+        if muestra:
+            return {
+                "success": True,
+                "tipo": "muestra",
+                "muestra": {
+                    "id": muestra.id,
+                    "nombre": muestra.nombre,
+                    "lote": muestra.lote,
+                    "cantidad": float(muestra.cantidad_gramos)
+                    if muestra.cantidad_gramos
+                    else 0,
+                    "estado": muestra.estado,
+                    "linea_negocio": muestra.linea_negocio,
+                    "anaquel": muestra.anaquel.nombre if muestra.anaquel else None,
+                    "nivel": muestra.nivel,
+                    "fila": muestra.fila,
+                    "posicion": muestra.posicion,
+                },
+            }
+        else:
+            return {
+                "success": False,
+                "error": "Muestra no encontrada en la base de datos",
+                "muestra_id": resultado.get("muestra_id"),
+            }
+
+    return {"success": True, "tipo": resultado.get("tipo"), "data": resultado}

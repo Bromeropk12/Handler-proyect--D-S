@@ -389,3 +389,86 @@ class ReportsService:
         output = io.BytesIO()
         wb.save(output)
         return output.getvalue()
+
+    @staticmethod
+    def generar_reporte_organizacion(db: Any, linea_id: int = None) -> Dict[str, Any]:
+        """
+        Genera reporte del estado de organización del almacén.
+
+        Args:
+            db: Sesión de base de datos
+            linea_id: Filtrar por línea específica (opcional)
+
+        Returns:
+            Diccionario con datos del reporte de organización
+        """
+        from services.motor_organizacion import MotorOrganizacion
+        from models.linea import Linea
+
+        # Obtener análisis completo
+        analisis = MotorOrganizacion.analizar_organizacion_actual(db, linea_id)
+
+        # Obtener resumen por líneas
+        resumen_lineas = MotorOrganizacion.obtener_resumen_lineas(db)
+
+        # Obtener hileras con contenido para análisis detallado
+        hileras_contenido = MotorOrganizacion.obtener_hileras_con_contenido(
+            db, linea_id
+        )
+
+        # Clasificar hileras por estado
+        hileras_ok = []
+        hileras_incompatibles = []
+        hileras_vacias = []
+
+        for hilera in hileras_contenido:
+            if hilera.get("muestra") is None:
+                hileras_vacias.append(hilera)
+            elif hilera.get("tiene_incompatibilidad"):
+                hileras_incompatibles.append(hilera)
+            else:
+                hileras_ok.append(hilera)
+
+        # Porcentajes
+        total_hileras = len(hileras_contenido)
+        pct_ocupadas = (
+            ((len(hileras_ok) + len(hileras_incompatibles)) / total_hileras * 100)
+            if total_hileras > 0
+            else 0
+        )
+        pct_incompatibles = (
+            (len(hileras_incompatibles) / total_hileras * 100)
+            if total_hileras > 0
+            else 0
+        )
+
+        return {
+            "success": True,
+            "reporte": "organizacion",
+            "fecha_generacion": datetime.now().isoformat(),
+            "resumen_ejecutivo": {
+                "score_organizacion": analisis.get("score_organizacion", 0),
+                "total_muestras": analisis.get("total_muestras", 0),
+                "muestras_ok": analisis.get("ok_count", 0),
+                "muestras_incompatibles": analisis.get("incompatible_count", 0),
+                "muestras_sin_clase": analisis.get("sin_clase_peligro", 0),
+                "porcentaje_ocupacion": round(pct_ocupadas, 1),
+                "porcentaje_incompatibles": round(pct_incompatibles, 1),
+            },
+            "resumen_por_linea": resumen_lineas.get("lineas", []),
+            "incompatibilidades": [
+                {
+                    "muestra": p.get("nombre"),
+                    "clase_peligro": p.get("clase_peligro"),
+                    "incompatibilidades": p.get("incompatibilidades", []),
+                }
+                for p in analisis.get("problemas", [])[:20]
+            ],
+            "sugerencias": analisis.get("sugerencias", []),
+            "detalle_hileras": {
+                "total": total_hileras,
+                "ok": len(hileras_ok),
+                "incompatibles": len(hileras_incompatibles),
+                "vacias": len(hileras_vacias),
+            },
+        }
